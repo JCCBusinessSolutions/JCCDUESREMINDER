@@ -2354,7 +2354,7 @@ let liveAccessList = [];
 // code" errors on slower connections where the click beat the download).
 const emailjsReady = new Promise((resolve, reject) => {
   const script = document.createElement('script');
-  script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/build/index.min.js';
+  script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
   script.onload = () => {
     emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
     resolve();
@@ -2449,11 +2449,7 @@ async function sendOTP() {
     updateResendTimer();
     wireOTPBoxes();
   } catch (e) {
-    // TEMP DEBUG: showing the real error so we can see what's actually
-    // failing. Once this is fixed, this should be changed back to the
-    // generic "Failed to send code. Please try again." message.
-    var debugMsg = (e && e.text) ? e.text : (e && e.message) ? e.message : JSON.stringify(e);
-    emailError.textContent = 'DEBUG: ' + debugMsg;
+    emailError.textContent = 'Failed to send code. Please try again.';
   } finally {
     document.getElementById('sendOtpBtn').disabled = false;
     document.getElementById('sendOtpBtn').textContent = 'SEND ACCESS CODE';
