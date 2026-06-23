@@ -2449,7 +2449,11 @@ async function sendOTP() {
     updateResendTimer();
     wireOTPBoxes();
   } catch (e) {
-    emailError.textContent = 'Failed to send code. Please try again.';
+    // TEMP DEBUG: showing the real error so we can see what's actually
+    // failing. Once this is fixed, this should be changed back to the
+    // generic "Failed to send code. Please try again." message.
+    var debugMsg = (e && e.text) ? e.text : (e && e.message) ? e.message : JSON.stringify(e);
+    emailError.textContent = 'DEBUG: ' + debugMsg;
   } finally {
     document.getElementById('sendOtpBtn').disabled = false;
     document.getElementById('sendOtpBtn').textContent = 'SEND ACCESS CODE';
