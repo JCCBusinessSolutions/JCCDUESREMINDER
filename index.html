@@ -2437,8 +2437,9 @@ async function sendOTP() {
   try {
     await emailjsReady; // wait for the SDK to finish loading before sending
     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-      to_email: email,
-      otp_code: generatedOTP
+      email: email,
+      passcode: generatedOTP,
+      time: '10 minutes'
     });
     
     document.getElementById('emailStep').style.display = 'none';
@@ -2449,9 +2450,7 @@ async function sendOTP() {
     updateResendTimer();
     wireOTPBoxes();
   } catch (e) {
-    // TEMP DEBUG #2
-    var debugMsg = (e && e.text) ? e.text : (e && e.message) ? e.message : JSON.stringify(e);
-    emailError.textContent = 'DEBUG2: ' + debugMsg;
+    emailError.textContent = 'Failed to send code. Please try again.';
   } finally {
     document.getElementById('sendOtpBtn').disabled = false;
     document.getElementById('sendOtpBtn').textContent = 'SEND ACCESS CODE';
