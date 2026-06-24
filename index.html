@@ -2460,7 +2460,8 @@ async function sendOTP() {
     updateResendTimer();
     wireOTPBoxes();
   } catch (e) {
-    emailError.textContent = 'Failed to send code. Please try again.';
+    // TEMP DEBUG #3
+    emailError.textContent = 'DEBUG3: ' + (e && e.text ? e.text : e && e.message ? e.message : JSON.stringify(e)) + ' | name=' + (e && e.name);
   } finally {
     document.getElementById('sendOtpBtn').disabled = false;
     document.getElementById('sendOtpBtn').textContent = 'SEND ACCESS CODE';
