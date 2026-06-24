@@ -395,7 +395,7 @@
   #sendOtpBtn { background:#E1AD01; color:#003B7A; }
   #sendOtpBtn:hover { background:#C9A227; }
   
-  .gate-error { color:#d32f2f; font-size:12px; margin-top:8px; text-align:left; }
+  .gate-error { color:#fff; font-size:12px; margin-top:8px; text-align:center; }
       .gate-footer { margin-top:32px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); font-size:11px; color:#a0afd9; text-align:center; line-height:1.4; }
   .gate-auth { color:#ffd700; font-size:11px; font-weight:600; letter-spacing:0.5px; margin-top:8px; margin-bottom:16px; text-align:center; }
   .gate-info { color:#e0e7ff; font-size:12px; margin-top:16px; text-align:center; }
@@ -2432,7 +2432,7 @@ async function sendOTP() {
   }
   
   if (!isPaidEmail(email)) {
-    emailError.textContent = 'This email does not have access. Please check and try again.';
+    emailError.textContent = 'The email does not have access yet. Please contact JCC Business Solutions.';
     return;
   }
   
