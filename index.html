@@ -2559,6 +2559,12 @@ function updateResendTimer() {
 function hideGate() {
   document.getElementById('gateScreen').classList.remove('show');
   document.getElementById('gateScreen').style.zIndex = '10';
+  // The gate is shown via an inline style.display='flex' (set at page load
+  // and again in logoutUser()). Inline styles always win over CSS class
+  // rules, so toggling the .show class alone never actually hides it —
+  // we have to clear the inline style directly, same as the working
+  // Proposal Summarizer gate does on successful verification.
+  document.getElementById('gateScreen').style.display = 'none';
   document.body.classList.add('cp-authed');
 }
 
@@ -2570,6 +2576,7 @@ function logoutUser() {
   document.getElementById('otpStep').style.display = 'none';
   document.getElementById('gateScreen').classList.add('show');
   document.getElementById('gateScreen').style.zIndex = '999';
+  document.getElementById('gateScreen').style.display = 'flex';
   document.getElementById('gateEmail').focus();
 }
 
