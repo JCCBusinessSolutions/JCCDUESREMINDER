@@ -368,9 +368,15 @@
   body.dark-mode #gateScreen { background:#0F1B2E; }
   #gateScreen.show { display:flex; }
   #gateScreen.hide-main { z-index:40; }
+  /* Belt-and-suspenders fix for header bleed-through behind the gate:
+     hide the dashboard's own header/content outright until the body
+     is marked authed, instead of relying solely on z-index stacking
+     (a sticky-positioned header was visually escaping the overlay). */
+  body:not(.cp-authed) #mobileHeaderBar,
+  body:not(.cp-authed) #mainContentWrapper { display:none !important; }
   
-  .gate-card { width:100%; max-width:420px; background:rgba(0, 59, 122, 0.85); border:1px solid rgba(0, 59, 122, 0.5); border-radius:16px; padding:32px 24px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.15); }
-  body.dark-mode .gate-card { background:rgba(0, 59, 122, 0.85); border-color:rgba(0, 59, 122, 0.5); }
+  .gate-card { width:100%; max-width:420px; background:rgb(0, 59, 122); border:1px solid rgba(0, 59, 122, 0.5); border-radius:16px; padding:32px 24px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.15); }
+  body.dark-mode .gate-card { background:rgb(0, 59, 122); border-color:rgba(0, 59, 122, 0.5); }
   
   .gate-logo { font-size:48px; margin-bottom:16px; }
   .gate-title { font-size:24px; font-weight:bold; color:#fff; margin-bottom:8px; }
@@ -475,7 +481,7 @@
 <!-- ============================================================
      MOBILE HEADER
      ============================================================ -->
-<div class="lg:hidden sticky top-0 z-30 bg-navy px-4 py-4 flex items-center gap-3 shadow-lg">
+<div class="lg:hidden sticky top-0 z-30 bg-navy px-4 py-4 flex items-center gap-3 shadow-lg" id="mobileHeaderBar">
   <div class="flex-1 min-w-0">
     <div class="font-heading text-white text-[15px] font-bold leading-tight" id="mobileTitleLine1">Client Payment</div>
     <div class="font-heading text-gold text-[15px] font-bold tracking-wide leading-tight" id="mobileTitleLine2">Due Reminder</div>
@@ -490,7 +496,7 @@
 <!-- ============================================================
      MAIN CONTENT
      ============================================================ -->
-<div class="lg:pl-[280px]">
+<div class="lg:pl-[280px]" id="mainContentWrapper">
 
   <!-- Desktop top header -->
   <div class="hidden lg:flex items-center justify-between px-10 py-5 bg-white border-b border-bordertan" id="desktopHeaderBar">
@@ -2540,10 +2546,12 @@ function updateResendTimer() {
 function hideGate() {
   document.getElementById('gateScreen').classList.remove('show');
   document.getElementById('gateScreen').style.zIndex = '10';
+  document.body.classList.add('cp-authed');
 }
 
 function logoutUser() {
   sessionStorage.removeItem('clientPulseAuth');
+  document.body.classList.remove('cp-authed');
   document.getElementById('gateEmail').value = '';
   document.getElementById('emailStep').style.display = 'block';
   document.getElementById('otpStep').style.display = 'none';
