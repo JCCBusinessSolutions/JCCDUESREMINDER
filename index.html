@@ -432,7 +432,25 @@
     <div id="emailStep">
       <input type="email" id="gateEmail" class="gate-input" placeholder="your@email.com" autocomplete="email">
       <div class="gate-error" id="emailError"></div>
-      <button class="gate-btn" onclick="accessGate()" id="sendOtpBtn">ACCESS DASHBOARD</button>
+      <button class="gate-btn" onclick="sendOTP()" id="sendOtpBtn">SEND ACCESS CODE</button>
+      <div class="gate-info">We'll send a 6-digit code to verify your email.</div>
+      <div class="gate-footer">JCC BUSINESS SOLUTIONS<br>All Rights Reserved 2026</div>
+    </div>
+    
+    <div id="otpStep" style="display:none;">
+      <div style="font-size:14px; color:#e0e7ff; margin-bottom:16px;" id="otpMessage">Enter the code sent to <strong id="otpEmail"></strong></div>
+      <div id="otpBoxes">
+        <input type="text" class="otp-box" maxlength="1" inputmode="numeric" data-index="0">
+        <input type="text" class="otp-box" maxlength="1" inputmode="numeric" data-index="1">
+        <input type="text" class="otp-box" maxlength="1" inputmode="numeric" data-index="2">
+        <input type="text" class="otp-box" maxlength="1" inputmode="numeric" data-index="3">
+        <input type="text" class="otp-box" maxlength="1" inputmode="numeric" data-index="4">
+        <input type="text" class="otp-box" maxlength="1" inputmode="numeric" data-index="5">
+      </div>
+      <div class="gate-error" id="otpError"></div>
+      <button class="gate-btn" onclick="verifyOTP()" id="verifyOtpBtn" style="background:#E1AD01; color:#003B7A; margin-bottom:8px;">VERIFY CODE</button>
+      <div class="resend-timer" id="resendTimer"></div>
+      <button class="gate-btn" onclick="goBackToEmail()" style="background:#999; margin-bottom:8px;">CHANGE EMAIL</button>
       <div class="gate-footer">JCC BUSINESS SOLUTIONS<br>All Rights Reserved 2026</div>
     </div>
   </div>
@@ -927,6 +945,26 @@
         </div>
       </div>
 
+      <div class="card" id="sendHourCard" style="display:none;">
+        <h2>Send Time</h2>
+        <p class="sub">Choose the hour window when daily dues reminders and birthday greetings go out. Changing this immediately reschedules both — no need to touch Apps Script.</p>
+        <label for="sendHourSelect">Daily send window</label>
+        <select id="sendHourSelect">
+          <option value="6">6:00 - 7:00 AM</option>
+          <option value="7">7:00 - 8:00 AM</option>
+          <option value="8">8:00 - 9:00 AM</option>
+          <option value="9">9:00 - 10:00 AM</option>
+          <option value="10">10:00 - 11:00 AM</option>
+          <option value="11">11:00 AM - 12:00 PM</option>
+          <option value="12">12:00 - 1:00 PM</option>
+          <option value="13">1:00 - 2:00 PM</option>
+          <option value="14">2:00 - 3:00 PM</option>
+          <option value="15">3:00 - 4:00 PM</option>
+          <option value="16">4:00 - 5:00 PM</option>
+        </select>
+        <div class="status" id="sendHourStatus"></div>
+      </div>
+
       <div class="card" id="passwordCard" style="display:none;">
         <h2>Excel Password</h2>
         <p class="sub">Saved until you change it — you won't need to retype this every time.</p>
@@ -1349,6 +1387,21 @@ async function fetchBrandConfig(){
   }catch(e){ return null; }
 }
 
+async function fetchSendHour(){
+  const url = getScriptUrl();
+  if (!url) return null;
+  try{
+    const res = await fetch(url + '?action=getSendHour');
+    const data = await res.json();
+    return (data && data.hour !== undefined) ? data.hour : null;
+  }catch(e){ return null; }
+}
+
+function populateSendHour(hour){
+  if (hour === null || hour === undefined) return;
+  el('sendHourSelect').value = String(hour);
+}
+
 function populateBrandingFields(config){
   if (!config) return;
   el('brandSenderName').value = config.senderName || '';
@@ -1377,11 +1430,13 @@ el('toggleConfig').addEventListener('click', () => {
   const b = el('brandingCard');
   const p = el('passwordCard');
   const l = el('logoutCard');
+  const h = el('sendHourCard');
   const show = c.style.display === 'none';
   c.style.display = show ? 'block' : 'none';
   b.style.display = show ? 'block' : 'none';
   p.style.display = show ? 'block' : 'none';
   l.style.display = show ? 'block' : 'none';
+  h.style.display = show ? 'block' : 'none';
   if (show) {
     const authEmail = sessionStorage.getItem('clientPulseAuth');
     if (authEmail) el('currentAuthEmail').textContent = authEmail;
@@ -1396,6 +1451,7 @@ el('saveScriptUrl').addEventListener('click', () => {
   showStatus('configStatus','success','Saved \u2014 this browser will remember it next time you open the app.');
   fetchSavedPassword().then(pw => { if (pw) el('pwField').value = pw; });
   fetchBrandConfig().then(config => populateBrandingFields(config));
+  fetchSendHour().then(hour => populateSendHour(hour));
   loadDueToday();
   loadDailyStats();
 });
@@ -1423,6 +1479,16 @@ el('saveBranding').addEventListener('click', async () => {
     showStatus('brandingStatus','success','Branding saved to your Apps Script. Future emails will use these values.');
   }catch(e){
     showStatus('brandingStatus','error','Could not save (check the Setup URL above). ' + e.message);
+  }
+});
+
+el('sendHourSelect').addEventListener('change', async () => {
+  const hour = el('sendHourSelect').value;
+  try{
+    await callBackend({ action:'setSendHour', hour: hour });
+    showStatus('sendHourStatus','success','Saved \u2014 dues reminders and birthday greetings will now send during this window.');
+  }catch(e){
+    showStatus('sendHourStatus','error','Could not save (check the Setup URL above). ' + e.message);
   }
 });
 
@@ -1754,6 +1820,7 @@ loadDueToday();
 loadDailyStats();
 fetchSavedPassword().then(pw => { if (pw) el('pwField').value = pw; });
 fetchBrandConfig().then(config => populateBrandingFields(config));
+fetchSendHour().then(hour => populateSendHour(hour));
 
 </script>
 
@@ -2325,28 +2392,48 @@ function wireRefreshFeedback(buttonId){
 ['refreshDueToday','refreshStats','refreshBirthdaysToday','refreshBirthdayStats'].forEach(wireRefreshFeedback);
 
 /* ============================================================
-   EMAIL GATE & SESSION-TOKEN AUTO-LOGOUT SYSTEM
-   ============================================================
-   No more OTP / EmailJS. Login is just a known-email check
-   against the BUYERS list. To stop the same login being shared
-   across devices, the backend stamps a fresh "session token" on
-   every successful login — logging in anywhere overwrites it.
-   This device polls every 30s; if the token it's holding no
-   longer matches what the server has, it auto-logs-out, because
-   that means the account was used somewhere else more recently.
+   EMAIL GATE & OTP SYSTEM
    ============================================================ */
+const EMAILJS_PUBLIC_KEY = 'jKhx2g7naojZElLYt';
+const EMAILJS_SERVICE_ID = 'service_hujj21z';
+const EMAILJS_TEMPLATE_ID = 'template_u0tzm9m';
 const CLIENT_PULSE_SHEET_API = 'https://script.google.com/macros/s/AKfycbxokTIMJdvgiv0wjO7uhAFjcMU_CAggjmIt8R8jbg1RMDk7iUmizSSJvtXI9xveVmf3bQ/exec';
 const ADMIN_EMAIL = 'castrojaymar0916@gmail.com';
 const HARDCODED_PAID = [ADMIN_EMAIL];
-const SESSION_CHECK_INTERVAL_MS = 30000;
 
 let currentEmail = '';
-let currentSessionToken = '';
+let generatedOTP = '';
+let otpExpiry = 0;
+let resendCooldown = 0;
 let liveAccessList = [];
-let sessionCheckIntervalId = null;
 
-// Fetch BUYERS list from Client Pulse Sheet (now also carries each row's
-// current session token, so we can compare against what we're holding)
+// Load EmailJS SDK — sendOTP() awaits this promise so it never tries
+// to call emailjs.send() before the library has actually finished loading
+// (the old version had no such guard, causing silent "Failed to send
+// code" errors on slower connections where the click beat the download).
+const emailjsReady = new Promise((resolve, reject) => {
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+  script.onload = () => {
+    emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
+    resolve();
+  };
+  script.onerror = () => reject(new Error('Could not load the EmailJS library. Check your connection.'));
+  document.head.appendChild(script);
+});
+
+// Check if user is already logged in (sessionStorage)
+function checkAuth() {
+  const storedEmail = sessionStorage.getItem('clientPulseAuth');
+  if (storedEmail && isValidEmail(storedEmail)) {
+    currentEmail = storedEmail;
+    hideGate();
+    return true;
+  }
+  return false;
+}
+
+// Fetch BUYERS list from Client Pulse Sheet
 async function fetchAccessList() {
   try {
     const response = await fetch(CLIENT_PULSE_SHEET_API, {method: 'GET'});
@@ -2354,20 +2441,21 @@ async function fetchAccessList() {
     if (Array.isArray(data)) {
       liveAccessList = data.map(row => ({
         email: String(row.email || '').trim().toLowerCase(),
-        status: String(row.status || '').trim().toUpperCase(),
-        sessionToken: String(row.sessionToken || '')
+        status: String(row.status || '').trim().toUpperCase()
       }));
     }
   } catch (e) {
-    // Silently fall back to whatever we already have if fetch fails
+    // Silently fall back to hardcoded list if fetch fails
   }
 }
 
 function isPaidEmail(email) {
   const emailLower = String(email).trim().toLowerCase();
+  // Check live list first
   if (liveAccessList.some(row => row.email === emailLower && row.status === 'PAID')) {
     return true;
   }
+  // Fall back to hardcoded
   if (HARDCODED_PAID.some(e => e.toLowerCase() === emailLower)) {
     return true;
   }
@@ -2378,84 +2466,143 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// Check if user is already logged in (sessionStorage) AND that session
-// is still the current one on the server — handles the case where the
-// account was logged into elsewhere while this tab/device was closed.
-function checkAuth() {
-  const storedEmail = sessionStorage.getItem('clientPulseAuth');
-  const storedToken = sessionStorage.getItem('clientPulseSessionToken');
-  if (storedEmail && isValidEmail(storedEmail) && storedToken) {
-    const row = liveAccessList.find(r => r.email === storedEmail);
-    if (row && row.sessionToken === storedToken) {
-      currentEmail = storedEmail;
-      currentSessionToken = storedToken;
-      hideGate();
-      startSessionWatch();
-      return true;
-    }
-    // Stale or superseded session — clear it and fall through to the gate
-    sessionStorage.removeItem('clientPulseAuth');
-    sessionStorage.removeItem('clientPulseSessionToken');
-  }
-  return false;
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-async function accessGate() {
+async function sendOTP() {
   const email = document.getElementById('gateEmail').value.trim();
   const emailError = document.getElementById('emailError');
   emailError.textContent = '';
-
+  
   if (!isValidEmail(email)) {
     emailError.textContent = 'Please enter a valid email address.';
     return;
   }
-
+  
   if (!isPaidEmail(email)) {
     emailError.textContent = 'This email does not have access. Please check and try again.';
     return;
   }
-
-  const btn = document.getElementById('sendOtpBtn');
-  btn.disabled = true;
-  btn.textContent = 'CHECKING...';
-
+  
+  currentEmail = email;
+  generatedOTP = generateOTP();
+  otpExpiry = Date.now() + 10 * 60 * 1000; // 10 min
+  resendCooldown = Date.now() + 30 * 1000; // 30 sec
+  
+  document.getElementById('sendOtpBtn').disabled = true;
+  document.getElementById('sendOtpBtn').textContent = 'SENDING...';
+  
   try {
-    const res = await fetch(CLIENT_PULSE_SHEET_API + '?action=login&email=' + encodeURIComponent(email));
-    const data = await res.json();
-    if (data && data.status === 'PAID' && data.token) {
-      currentEmail = email.toLowerCase();
-      currentSessionToken = data.token;
-      sessionStorage.setItem('clientPulseAuth', currentEmail);
-      sessionStorage.setItem('clientPulseSessionToken', currentSessionToken);
-      hideGate();
-      startSessionWatch();
-    } else {
-      emailError.textContent = 'This email does not have access. Please check and try again.';
-    }
+    await emailjsReady; // wait for the SDK to finish loading before sending
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      email: email,
+      passcode: generatedOTP,
+      time: '10 minutes'
+    });
+    
+    document.getElementById('emailStep').style.display = 'none';
+    document.getElementById('otpStep').style.display = 'block';
+    document.getElementById('otpEmail').textContent = email;
+    document.getElementById('otpBoxes').querySelectorAll('input').forEach(el => el.value = '');
+    document.getElementById('otpBoxes').querySelectorAll('input')[0].focus();
+    updateResendTimer();
+    wireOTPBoxes();
   } catch (e) {
-    emailError.textContent = 'Could not verify access right now. Please try again.';
+    emailError.textContent = 'Failed to send code. Please try again.';
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'ACCESS DASHBOARD';
+    document.getElementById('sendOtpBtn').disabled = false;
+    document.getElementById('sendOtpBtn').textContent = 'SEND ACCESS CODE';
   }
 }
 
-function startSessionWatch() {
-  if (sessionCheckIntervalId) clearInterval(sessionCheckIntervalId);
-  sessionCheckIntervalId = setInterval(checkSessionStillValid, SESSION_CHECK_INTERVAL_MS);
+function wireOTPBoxes() {
+  const boxes = document.querySelectorAll('.otp-box');
+  // Autofill (especially iOS QuickType one-time-code suggestions) doesn't
+  // reliably fire a normal 'input' event on the last box specifically —
+  // sometimes it fires on an earlier box, or fires 'change' instead. So
+  // instead of only checking "is this the last box", check after every
+  // input/change event whether ALL boxes are now filled, and verify if so.
+  // The explicit VERIFY CODE button is the guaranteed fallback either way.
+  const checkAllFilled = () => {
+    const allFilled = Array.from(boxes).every(b => b.value);
+    if (allFilled) verifyOTP();
+  };
+  boxes.forEach((box, idx) => {
+    box.addEventListener('input', () => {
+      if (box.value && idx < boxes.length - 1) {
+        boxes[idx + 1].focus();
+      }
+      checkAllFilled();
+    });
+    box.addEventListener('change', checkAllFilled);
+    box.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !box.value && idx > 0) {
+        boxes[idx - 1].focus();
+      }
+      if (e.key === 'Enter') {
+        verifyOTP();
+      }
+    });
+    box.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const paste = (e.clipboardData || window.clipboardData).getData('text');
+      if (/^\d{6}$/.test(paste)) {
+        paste.split('').forEach((char, i) => {
+          if (i < boxes.length) boxes[i].value = char;
+        });
+        verifyOTP();
+      }
+    });
+  });
 }
 
-async function checkSessionStillValid() {
-  if (!currentEmail) return;
-  try {
-    await fetchAccessList();
-    const row = liveAccessList.find(r => r.email === currentEmail);
-    if (!row || row.sessionToken !== currentSessionToken) {
-      logoutUser('You were logged out because this account was used on another device.');
+function verifyOTP() {
+  const boxes = document.querySelectorAll('.otp-box');
+  const code = Array.from(boxes).map(b => b.value).join('');
+  const otpError = document.getElementById('otpError');
+
+  if (code.length !== 6) {
+    otpError.textContent = 'Please enter all 6 digits.';
+    return;
+  }
+
+  if (Date.now() > otpExpiry) {
+    otpError.textContent = 'Code expired. Send a new one.';
+    goBackToEmail();
+    return;
+  }
+
+  if (code !== generatedOTP) {
+    otpError.textContent = 'Incorrect code. Try again.';
+    return;
+  }
+
+  // Success
+  sessionStorage.setItem('clientPulseAuth', currentEmail);
+  hideGate();
+}
+
+function goBackToEmail() {
+  document.getElementById('otpStep').style.display = 'none';
+  document.getElementById('emailStep').style.display = 'block';
+  document.getElementById('gateEmail').value = '';
+  document.getElementById('gateEmail').focus();
+  document.getElementById('emailError').textContent = '';
+  document.getElementById('otpError').textContent = '';
+}
+
+function updateResendTimer() {
+  const timer = document.getElementById('resendTimer');
+  const interval = setInterval(() => {
+    const remaining = Math.ceil((resendCooldown - Date.now()) / 1000);
+    if (remaining > 0) {
+      timer.textContent = `Resend in ${remaining}s`;
+    } else {
+      timer.innerHTML = '<button class="gate-btn" style="background:#666;" onclick="sendOTP()">RESEND CODE</button>';
+      clearInterval(interval);
     }
-  } catch (e) {
-    // Transient network blip — don't log someone out over that
-  }
+  }, 100);
 }
 
 function hideGate() {
@@ -2465,33 +2612,25 @@ function hideGate() {
     document.getElementById('gateScreen').style.display = 'none';
     document.body.classList.add('cp-authed');
   } catch (e) {
-    var emailError = document.getElementById('emailError');
-    if (emailError) emailError.textContent = 'Something went wrong unlocking the dashboard: ' + e.message;
+    var otpError = document.getElementById('otpError');
+    if (otpError) otpError.textContent = 'Something went wrong unlocking the dashboard: ' + e.message;
   }
 }
 
-function logoutUser(message) {
-  if (sessionCheckIntervalId) { clearInterval(sessionCheckIntervalId); sessionCheckIntervalId = null; }
+function logoutUser() {
   sessionStorage.removeItem('clientPulseAuth');
-  sessionStorage.removeItem('clientPulseSessionToken');
-  currentEmail = '';
-  currentSessionToken = '';
   document.body.classList.remove('cp-authed');
   document.getElementById('gateEmail').value = '';
-  document.getElementById('emailError').textContent = message || '';
+  document.getElementById('emailStep').style.display = 'block';
+  document.getElementById('otpStep').style.display = 'none';
   document.getElementById('gateScreen').classList.add('show');
   document.getElementById('gateScreen').style.zIndex = '999';
-  document.getElementById('gateScreen').style.display = 'flex';
   document.getElementById('gateEmail').focus();
 }
 
-document.getElementById('gateEmail').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') accessGate();
-});
-
 // Initialize on page load
-(async function() {
-  await fetchAccessList();
+(function() {
+  fetchAccessList();
   if (!checkAuth()) {
     document.getElementById('gateScreen').style.display = 'flex';
   }
