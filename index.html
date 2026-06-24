@@ -373,7 +373,8 @@
      is marked authed, instead of relying solely on z-index stacking
      (a sticky-positioned header was visually escaping the overlay). */
   body:not(.cp-authed) #mobileHeaderBar,
-  body:not(.cp-authed) #mainContentWrapper { display:none !important; }
+  body:not(.cp-authed) #mainContentWrapper,
+  body:not(.cp-authed) #mobileBottomNav { display:none !important; }
   
   .gate-card { width:100%; max-width:420px; background:rgb(0, 59, 122); border:1px solid rgba(0, 59, 122, 0.5); border-radius:16px; padding:32px 24px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.15); }
   body.dark-mode .gate-card { background:rgb(0, 59, 122); border-color:rgba(0, 59, 122, 0.5); }
@@ -974,7 +975,7 @@
 <!-- ============================================================
      MOBILE BOTTOM NAV
      ============================================================ -->
-<nav class="mobile-bottom-nav lg:hidden">
+<nav class="mobile-bottom-nav lg:hidden" id="mobileBottomNav">
   <div class="mobile-nav-item active" data-nav="dues" onclick="scrollToSection('dues')"><span class="ico">📊</span>Client Dues</div>
   <div class="mobile-nav-item" data-nav="birthday" onclick="scrollToSection('birthday')"><span class="ico">🎂</span>Birthdays</div>
   <div class="mobile-nav-item" data-nav="upload" onclick="scrollToSection('upload')"><span class="ico">📤</span>Upload</div>
