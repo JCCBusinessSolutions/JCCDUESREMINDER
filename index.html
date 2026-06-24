@@ -2512,23 +2512,28 @@ function verifyOTP() {
   const boxes = document.querySelectorAll('.otp-box');
   const code = Array.from(boxes).map(b => b.value).join('');
   const otpError = document.getElementById('otpError');
-  
+
+  // TEMP DEBUG
+  otpError.style.color = '#fff';
+  otpError.textContent = 'DEBUG: code="' + code + '" (len ' + code.length + ') generatedOTP="' + generatedOTP + '" expiresIn=' + Math.round((otpExpiry - Date.now())/1000) + 's';
+
   if (code.length !== 6) {
-    otpError.textContent = 'Please enter all 6 digits.';
+    otpError.textContent += ' | STOPPED: not 6 digits yet';
     return;
   }
-  
+
   if (Date.now() > otpExpiry) {
-    otpError.textContent = 'Code expired. Send a new one.';
+    otpError.textContent += ' | STOPPED: expired';
     goBackToEmail();
     return;
   }
-  
+
   if (code !== generatedOTP) {
-    otpError.textContent = 'Incorrect code. Try again.';
+    otpError.textContent += ' | STOPPED: code mismatch';
     return;
   }
-  
+
+  otpError.textContent += ' | MATCHED, calling hideGate()';
   // Success
   sessionStorage.setItem('clientPulseAuth', currentEmail);
   hideGate();
@@ -2557,9 +2562,14 @@ function updateResendTimer() {
 }
 
 function hideGate() {
-  document.getElementById('gateScreen').classList.remove('show');
-  document.getElementById('gateScreen').style.zIndex = '10';
-  document.body.classList.add('cp-authed');
+  try {
+    document.getElementById('gateScreen').classList.remove('show');
+    document.getElementById('gateScreen').style.zIndex = '10';
+    document.body.classList.add('cp-authed');
+  } catch (e) {
+    var otpError = document.getElementById('otpError');
+    if (otpError) otpError.textContent = 'DEBUG hideGate ERROR: ' + e.message;
+  }
 }
 
 function logoutUser() {
