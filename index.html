@@ -392,6 +392,8 @@
   .gate-btn { width:100%; padding:12px; font-size:15px; font-weight:600; border:none; border-radius:8px; cursor:pointer; text-transform:uppercase; letter-spacing:0.5px; background:#003B7A; color:#fff; margin-top:8px; transition:background 0.2s; }
   .gate-btn:hover { background:#002752; }
   .gate-btn:disabled { opacity:0.6; cursor:not-allowed; }
+  #sendOtpBtn { background:#E1AD01; color:#003B7A; }
+  #sendOtpBtn:hover { background:#C9A227; }
   
   .gate-error { color:#d32f2f; font-size:12px; margin-top:8px; text-align:left; }
       .gate-footer { margin-top:32px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); font-size:11px; color:#a0afd9; text-align:center; line-height:1.4; }
@@ -446,6 +448,7 @@
         <input type="text" class="otp-box" maxlength="1" inputmode="numeric" data-index="5">
       </div>
       <div class="gate-error" id="otpError"></div>
+      <button class="gate-btn" onclick="verifyOTP()" id="verifyOtpBtn" style="margin-bottom:8px;">VERIFY CODE</button>
       <div class="resend-timer" id="resendTimer"></div>
       <button class="gate-btn" onclick="goBackToEmail()" style="background:#999; margin-bottom:8px;">CHANGE EMAIL</button>
       <div class="gate-footer">JCC BUSINESS SOLUTIONS<br>All Rights Reserved 2026</div>
@@ -2466,15 +2469,24 @@ async function sendOTP() {
 
 function wireOTPBoxes() {
   const boxes = document.querySelectorAll('.otp-box');
+  // Autofill (especially iOS QuickType one-time-code suggestions) doesn't
+  // reliably fire a normal 'input' event on the last box specifically —
+  // sometimes it fires on an earlier box, or fires 'change' instead. So
+  // instead of only checking "is this the last box", check after every
+  // input/change event whether ALL boxes are now filled, and verify if so.
+  // The explicit VERIFY CODE button is the guaranteed fallback either way.
+  const checkAllFilled = () => {
+    const allFilled = Array.from(boxes).every(b => b.value);
+    if (allFilled) verifyOTP();
+  };
   boxes.forEach((box, idx) => {
     box.addEventListener('input', () => {
       if (box.value && idx < boxes.length - 1) {
         boxes[idx + 1].focus();
       }
-      if (idx === boxes.length - 1 && box.value) {
-        verifyOTP();
-      }
+      checkAllFilled();
     });
+    box.addEventListener('change', checkAllFilled);
     box.addEventListener('keydown', (e) => {
       if (e.key === 'Backspace' && !box.value && idx > 0) {
         boxes[idx - 1].focus();
