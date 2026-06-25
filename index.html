@@ -1290,17 +1290,21 @@ function parseDuesFromWorkbook(workbook){
   const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true});
 
   let headerIdx = -1;
-  for (let i=0;i<rows.length;i++){
-    if (String(rows[i][0]||'').trim() === 'Policy number'){ headerIdx = i; break; }
+  for (let i=0;i<Math.min(rows.length, 25);i++){
+    if (String(rows[i][0]||'').trim().toLowerCase() === 'policy number'){ headerIdx = i; break; }
   }
   if (headerIdx === -1) throw new Error('HEADER_NOT_FOUND');
 
   const headers = rows[headerIdx].map(h => String(h||'').trim());
-  const col = name => headers.indexOf(name);
+  const col = name => {
+    const lowerName = name.toLowerCase();
+    return headers.findIndex(h => h.toLowerCase() === lowerName);
+  };
   const colClientName = col('Client name') !== -1 ? col('Client name') : col('Policy owner');
 
   const required = ['Policy number','Premium mode','Premium amount','Total premium','Premium due date','Policy status','Policy name','Email address'];
-  for (const r of required){ if (col(r) === -1) throw new Error('MISSING_COLUMN: ' + r); }
+  const missing = required.filter(r => col(r) === -1);
+  if (missing.length > 0) throw new Error('MISSING_COLUMNS: ' + missing.join(', '));
 
   const out = [];
   let skippedStatus = 0;
@@ -1690,6 +1694,7 @@ el('parseBtn').addEventListener('click', async () => {
     if (msg === 'WRONG_PASSWORD_OR_FORMAT') msg = 'Could not open the file — check the password and try again.';
     if (msg === 'NO_SCRIPT_URL') msg = 'No Apps Script URL configured. Tap "Setup" above.';
     if (msg === 'HEADER_NOT_FOUND') msg = 'This doesn\u2019t look like a Sun Life policy list export.';
+    if (msg.startsWith('MISSING_COLUMNS:')) msg = 'This file is missing required columns: ' + msg.replace('MISSING_COLUMNS: ','') + '. Make sure you\u2019re uploading the "All Clients > Download Report > Life Policy List" from Sun Life.';
     showStatus('mainStatus','error', msg);
   }finally{
     el('parseBtn').disabled = false;
@@ -2028,16 +2033,20 @@ function parseBirthdaysFromWorkbook(workbook){
   const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true});
 
   let headerIdx = -1;
-  for (let i=0;i<rows.length;i++){
-    if (String(rows[i][0]||'').trim() === 'Client name'){ headerIdx = i; break; }
+  for (let i=0;i<Math.min(rows.length, 25);i++){
+    if (String(rows[i][0]||'').trim().toLowerCase() === 'client name'){ headerIdx = i; break; }
   }
   if (headerIdx === -1) throw new Error('HEADER_NOT_FOUND');
 
   const headers = rows[headerIdx].map(h => String(h||'').trim());
-  const col = name => headers.indexOf(name);
+  const col = name => {
+    const lowerName = name.toLowerCase();
+    return headers.findIndex(h => h.toLowerCase() === lowerName);
+  };
 
   const required = ['Client name','Email address','Contact number','Location','Date of birth'];
-  for (const r of required){ if (col(r) === -1) throw new Error('MISSING_COLUMN: ' + r); }
+  const missing = required.filter(r => col(r) === -1);
+  if (missing.length > 0) throw new Error('MISSING_COLUMNS: ' + missing.join(', '));
 
   const out = [];
   for (let i = headerIdx+1; i < rows.length; i++){
@@ -2115,6 +2124,7 @@ el('birthdayParseBtn').addEventListener('click', async () => {
     if (msg === 'WRONG_PASSWORD_OR_FORMAT') msg = 'Could not open the file — check the password and try again.';
     if (msg === 'NO_SCRIPT_URL') msg = 'No Apps Script URL configured. Tap "Setup" above.';
     if (msg === 'HEADER_NOT_FOUND') msg = 'This doesn\u2019t look like a Sun Life client list export.';
+    if (msg.startsWith('MISSING_COLUMNS:')) msg = 'This file is missing required columns: ' + msg.replace('MISSING_COLUMNS: ','') + '. Make sure you\u2019re uploading the "All Clients > Download Report > Client List" from Sun Life.';
     showStatus('birthdayMainStatus','error', msg);
   }finally{
     el('birthdayParseBtn').disabled = false;
