@@ -311,6 +311,11 @@
   body.dark-mode .kpi-card{ background:#16233A; border-color:#27374D; }
   body.dark-mode .file-drop{ background:#1B2A42; border-color:#27374D; }
   body.dark-mode .file-drop p{ color:#8DA0BC; }
+  /* "✓ Photo uploaded" / picked filename text — every .file-drop box
+     goes dark navy above, so this stays navy-on-navy unless forced
+     white. Applies globally since all 4 file-drop instances (Excel
+     upload, header/footer photo) get the same dark background. */
+  body.dark-mode .file-drop .fname{ color:#FFFFFF !important; }
   body.dark-mode .due-item{ background:#1B2A42; border-color:#27374D; }
   body.dark-mode .preview-img-slot{ background:#1B2A42; color:#8DA0BC; }
   body.dark-mode .summary-grid div{ background:#1B2A42; border-color:#27374D; }
@@ -325,6 +330,14 @@
   body.dark-mode #fileDrop p:last-of-type{ color:#8DA0BC !important; }
   body.dark-mode #birthdayFileDrop p{ color:#FFFFFF !important; }
   body.dark-mode #birthdayFileDrop p:last-of-type{ color:#8DA0BC !important; }
+  /* The "Your name" box inside Branding uses .bg-bgcream, which goes
+     dark navy in night mode (see rule above) — its label and SAVE NAME
+     button text must switch to white here too, or they're unreadable
+     navy-on-navy. Scoped to #brandingCard .bg-bgcream only, so every
+     other label/.btn-ghost (which all sit on the still-white .card
+     background) stays untouched, in both light and dark mode. */
+  body.dark-mode #brandingCard .bg-bgcream label,
+  body.dark-mode #brandingCard .bg-bgcream .btn-ghost{ color:#FFFFFF !important; }
   @keyframes refreshPulse{
     0%, 100% { opacity:1; transform:scale(1); }
     50% { opacity:0.5; transform:scale(0.97); }
@@ -448,6 +461,7 @@
     <div class="sidebar-link" data-nav="reports"><span>📈</span>Reports</div>
     <div class="sidebar-link" data-nav="clients"><span>👥</span>Clients</div>
     <div class="sidebar-link" data-nav="settings" id="sidebarSettingsLink"><span>⚙️</span>Settings<span class="dot" id="sidebarSettingsDot" style="display:none;"></span></div>
+    <div class="sidebar-link" id="sidebarLogoutLink" onclick="logoutUser()" style="color:#FF8A80;"><span>🚪</span>Logout</div>
   </nav>
   <div class="px-4 pb-4">
     <div class="glass rounded-2xl p-4 mb-3">
@@ -922,6 +936,26 @@
         </div>
       </div>
 
+      <div class="card" id="sendHourCard" style="display:none;">
+        <h2>Send Time</h2>
+        <p class="sub">Choose the hour window when daily dues reminders and birthday greetings go out. Changing this immediately reschedules both — no need to touch Apps Script.</p>
+        <label for="sendHourSelect">Daily send window</label>
+        <select id="sendHourSelect">
+          <option value="6">6:00 - 7:00 AM</option>
+          <option value="7">7:00 - 8:00 AM</option>
+          <option value="8">8:00 - 9:00 AM</option>
+          <option value="9">9:00 - 10:00 AM</option>
+          <option value="10">10:00 - 11:00 AM</option>
+          <option value="11">11:00 AM - 12:00 PM</option>
+          <option value="12">12:00 - 1:00 PM</option>
+          <option value="13">1:00 - 2:00 PM</option>
+          <option value="14">2:00 - 3:00 PM</option>
+          <option value="15">3:00 - 4:00 PM</option>
+          <option value="16">4:00 - 5:00 PM</option>
+        </select>
+        <div class="status" id="sendHourStatus"></div>
+      </div>
+
       <div class="card" id="passwordCard" style="display:none;">
         <h2>Excel Password</h2>
         <p class="sub">Saved until you change it — you won't need to retype this every time.</p>
@@ -931,14 +965,6 @@
           <button class="btn-ghost" id="savePw">SAVE PASSWORD</button>
         </div>
         <div class="status" id="pwStatus"></div>
-      </div>
-
-      <div class="card" id="logoutCard" style="display:none;">
-        <h2>Account</h2>
-        <p class="sub">Logged in as: <strong id="currentAuthEmail"></strong></p>
-        <div class="row">
-          <button class="btn-ghost" style="background:#d32f2f; color:#fff;" onclick="logoutUser()">LOGOUT</button>
-        </div>
       </div>
     </div>
 
@@ -959,6 +985,7 @@
   <div class="mobile-nav-item active" data-nav="dues" onclick="scrollToSection('dues')"><span class="ico">📊</span>Client Dues</div>
   <div class="mobile-nav-item" data-nav="birthday" onclick="scrollToSection('birthday')"><span class="ico">🎂</span>Birthdays</div>
   <div class="mobile-nav-item" data-nav="upload" onclick="scrollToSection('upload')"><span class="ico">📤</span>Upload</div>
+  <div class="mobile-nav-item" id="mobileLogoutLink" onclick="logoutUser()" style="color:#d32f2f;"><span class="ico">🚪</span>Logout</div>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -1324,6 +1351,21 @@ async function callBackend(payload){
   return res.json();
 }
 
+async function fetchSendHour(){
+  const url = getScriptUrl();
+  if (!url) return null;
+  try{
+    const res = await fetch(url + '?action=getSendHour');
+    const data = await res.json();
+    return (data && data.hour !== undefined) ? data.hour : null;
+  }catch(e){ return null; }
+}
+
+function populateSendHour(hour){
+  if (hour === null || hour === undefined) return;
+  el('sendHourSelect').value = String(hour);
+}
+
 async function fetchSavedPassword(){
   const url = getScriptUrl();
   if (!url) return '';
@@ -1370,17 +1412,13 @@ function hideStatus(id){ el(id).className = 'status'; }
 el('toggleConfig').addEventListener('click', () => {
   const c = el('configCard');
   const b = el('brandingCard');
+  const h = el('sendHourCard');
   const p = el('passwordCard');
-  const l = el('logoutCard');
   const show = c.style.display === 'none';
   c.style.display = show ? 'block' : 'none';
   b.style.display = show ? 'block' : 'none';
+  h.style.display = show ? 'block' : 'none';
   p.style.display = show ? 'block' : 'none';
-  l.style.display = show ? 'block' : 'none';
-  if (show) {
-    const authEmail = sessionStorage.getItem('clientPulseAuth');
-    if (authEmail) el('currentAuthEmail').textContent = authEmail;
-  }
 });
 
 el('saveScriptUrl').addEventListener('click', () => {
@@ -1391,6 +1429,7 @@ el('saveScriptUrl').addEventListener('click', () => {
   showStatus('configStatus','success','Saved \u2014 this browser will remember it next time you open the app.');
   fetchSavedPassword().then(pw => { if (pw) el('pwField').value = pw; });
   fetchBrandConfig().then(config => populateBrandingFields(config));
+  fetchSendHour().then(hour => populateSendHour(hour));
   loadDueToday();
   loadDailyStats();
 });
@@ -1418,6 +1457,16 @@ el('saveBranding').addEventListener('click', async () => {
     showStatus('brandingStatus','success','Branding saved to your Apps Script. Future emails will use these values.');
   }catch(e){
     showStatus('brandingStatus','error','Could not save (check the Setup URL above). ' + e.message);
+  }
+});
+
+el('sendHourSelect').addEventListener('change', async () => {
+  const hour = el('sendHourSelect').value;
+  try{
+    await callBackend({ action:'setSendHour', hour: hour });
+    showStatus('sendHourStatus','success','Saved \u2014 dues reminders and birthday greetings will now send during this window.');
+  }catch(e){
+    showStatus('sendHourStatus','error','Could not save (check the Setup URL above). ' + e.message);
   }
 });
 
@@ -1749,6 +1798,7 @@ loadDueToday();
 loadDailyStats();
 fetchSavedPassword().then(pw => { if (pw) el('pwField').value = pw; });
 fetchBrandConfig().then(config => populateBrandingFields(config));
+fetchSendHour().then(hour => populateSendHour(hour));
 
 </script>
 
