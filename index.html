@@ -503,9 +503,9 @@
       </button>
       <button class="!w-10 !h-10 !min-h-0 !p-0 !rounded-full bg-bgcream border border-bordertan text-base" onclick="showToast('No new notifications.')">🔔</button>
       <div class="flex items-center gap-3 cursor-pointer" onclick="document.getElementById('toggleConfig').click(); scrollToSection('settings');">
-        <div class="w-10 h-10 rounded-full bg-navy text-gold font-heading font-bold flex items-center justify-center text-sm">JC</div>
+        <div class="w-10 h-10 rounded-full bg-navy text-gold font-heading font-bold flex items-center justify-center text-sm" id="headerAdvisorAvatar">--</div>
         <div>
-          <div class="text-sm font-semibold text-ink leading-tight">Jaymar Castro</div>
+          <div class="text-sm font-semibold text-ink leading-tight" id="headerAdvisorName">Your Name</div>
           <div class="text-xs text-muted leading-tight">Financial Advisor</div>
         </div>
         <span class="text-muted text-xs">▾</span>
@@ -1878,6 +1878,19 @@ fetchSendHour().then(hour => populateSendHour(hour));
     return trimmed.split(/\s+/)[0];
   }
 
+  function updateHeaderIdentity(fullName){
+    const trimmed = String(fullName || '').trim();
+    const nameEl = document.getElementById('headerAdvisorName');
+    const avatarEl = document.getElementById('headerAdvisorAvatar');
+    if (!trimmed){
+      nameEl.textContent = 'Your Name';
+      avatarEl.textContent = '--';
+      return;
+    }
+    nameEl.textContent = trimmed;
+    avatarEl.textContent = trimmed.split(/\s+/).slice(0,2).map(w => w[0].toUpperCase()).join('');
+  }
+
   async function fetchAdvisorProfile(){
     const url = getScriptUrl();
     if (!url) return null;
@@ -1911,6 +1924,7 @@ fetchSendHour().then(hour => populateSendHour(hour));
       currentAdvisorFirstName = firstNameOnly(profile.advisorName);
       document.getElementById('advisorNameInput').value = profile.advisorName;
     }
+    updateHeaderIdentity(profile && profile.advisorName);
     renderGreeting();
     if (profile && profile.profileImageFileId){
       const photo = await fetchProfilePhoto();
@@ -1924,6 +1938,7 @@ fetchSendHour().then(hour => populateSendHour(hour));
     try{
       await callBackend({ action:'saveAdvisorName', name: name });
       currentAdvisorFirstName = firstNameOnly(name);
+      updateHeaderIdentity(name);
       renderGreeting();
       statusEl.className = 'status show success';
       statusEl.textContent = 'Saved. Your dashboard greeting is updated.';
