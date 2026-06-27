@@ -968,10 +968,9 @@
         </div>
         <div id="duesClientsBody">
           <div style="padding:12px 16px;border-bottom:1px solid #e7dfcf;">
-            <div style="position:relative;display:flex;gap:8px;">
-              <input type="text" id="duesSearchInput" placeholder="🔍 Search by name..." oninput="filterDuesClients()" onchange="filterDuesClients()" style="flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
-              <button onclick="document.getElementById('duesSearchInput').value=''; filterDuesClients();" style="position:absolute;right:48px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#999;font-size:16px;padding:4px;">✕</button>
-              <button onclick="filterDuesClients();" style="padding:10px 16px;background:#0C447C;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;">SEARCH</button>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="text" id="duesSearchInput" placeholder="Search by name, product, or policy #..." style="flex:1;min-width:0;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
+              <button type="button" id="duesSearchClearBtn" style="flex-shrink:0;background:none;border:1px solid #ddd;border-radius:8px;cursor:pointer;color:#999;font-size:16px;padding:8px 12px;">✕</button>
             </div>
             <div style="font-size:11px;color:#6b7280;margin-top:8px;" id="duesSearchCount"></div>
           </div>
@@ -993,10 +992,9 @@
         </div>
         <div id="birthdayClientsBody">
           <div style="padding:12px 16px;border-bottom:1px solid #e7dfcf;">
-            <div style="position:relative;display:flex;gap:8px;">
-              <input type="text" id="birthdaySearchInput" placeholder="🔍 Search by name..." oninput="filterBirthdayClients()" onchange="filterBirthdayClients()" style="flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
-              <button onclick="document.getElementById('birthdaySearchInput').value=''; filterBirthdayClients();" style="position:absolute;right:48px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#999;font-size:16px;padding:4px;">✕</button>
-              <button onclick="filterBirthdayClients();" style="padding:10px 16px;background:#0C447C;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;">SEARCH</button>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="text" id="birthdaySearchInput" placeholder="Search by name, email, or location..." style="flex:1;min-width:0;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
+              <button type="button" id="birthdaySearchClearBtn" style="flex-shrink:0;background:none;border:1px solid #ddd;border-radius:8px;cursor:pointer;color:#999;font-size:16px;padding:8px 12px;">✕</button>
             </div>
             <div style="font-size:11px;color:#6b7280;margin-top:8px;" id="birthdaySearchCount"></div>
           </div>
@@ -2704,77 +2702,70 @@ let duesPageOffset = 0;
 let birthdayPageOffset = 0;
 const CLIENTS_PER_PAGE = 10;
 
+// Track unsaved checkbox changes so they survive re-renders caused by
+// searching/filtering or infinite scroll. Key = policyNumber / email.
+const duesPendingChanges = {};
+const birthdayPendingChanges = {};
+
 function filterDuesClients(){
-  try {
-    const input = document.getElementById('duesSearchInput');
-    if (!input) return;
-    
-    const query = (input.value || '').toLowerCase().trim();
-    
-    if (!query) {
-      // Reset to full list
-      renderDuesClientsList(allDuesClients);
-      document.getElementById('duesSearchCount').textContent = '';
-      return;
-    }
+  const input = document.getElementById('duesSearchInput');
+  const countEl = document.getElementById('duesSearchCount');
+  if (!input) return;
 
-    // Ensure allDuesClients exists
-    if (!allDuesClients || allDuesClients.length === 0) {
-      console.warn('No clients loaded for filtering');
-      return;
-    }
+  const query = input.value.toLowerCase().trim();
 
-    // Filter by name, product, or policy number
-    const filtered = allDuesClients.filter(client => {
-      const nameMatch = (client.clientName || '').toLowerCase().includes(query);
-      const productMatch = (client.product || '').toLowerCase().includes(query);
-      const policyMatch = (client.policyNumber || '').toLowerCase().includes(query);
-      return nameMatch || productMatch || policyMatch;
-    });
+  if (!allDuesClients || allDuesClients.length === 0){
+    if (countEl) countEl.textContent = '';
+    return;
+  }
 
-    renderDuesClientsList(filtered);
-    const count = filtered.length;
-    const total = allDuesClients.length;
-    document.getElementById('duesSearchCount').textContent = count === total ? '' : `${count} of ${total} match`;
-  } catch (e) {
-    console.error('Filter error:', e);
+  if (!query) {
+    renderDuesClientsList(allDuesClients);
+    if (countEl) countEl.textContent = '';
+    return;
+  }
+
+  const filtered = allDuesClients.filter(client => {
+    const nameMatch = (client.clientName || '').toLowerCase().includes(query);
+    const productMatch = (client.product || '').toLowerCase().includes(query);
+    const policyMatch = (String(client.policyNumber || '')).toLowerCase().includes(query);
+    return nameMatch || productMatch || policyMatch;
+  });
+
+  renderDuesClientsList(filtered);
+  if (countEl) {
+    countEl.textContent = filtered.length === allDuesClients.length ? '' : `${filtered.length} of ${allDuesClients.length} match`;
   }
 }
 
 function filterBirthdayClients(){
-  try {
-    const input = document.getElementById('birthdaySearchInput');
-    if (!input) return;
-    
-    const query = (input.value || '').toLowerCase().trim();
-    
-    if (!query) {
-      // Reset to full list
-      renderBirthdayClientsList(allBirthdayClients);
-      document.getElementById('birthdaySearchCount').textContent = '';
-      return;
-    }
+  const input = document.getElementById('birthdaySearchInput');
+  const countEl = document.getElementById('birthdaySearchCount');
+  if (!input) return;
 
-    // Ensure allBirthdayClients exists
-    if (!allBirthdayClients || allBirthdayClients.length === 0) {
-      console.warn('No birthday clients loaded for filtering');
-      return;
-    }
+  const query = input.value.toLowerCase().trim();
 
-    // Filter by name, email, or location
-    const filtered = allBirthdayClients.filter(client => {
-      const nameMatch = (client.fullName || '').toLowerCase().includes(query);
-      const emailMatch = (client.email || '').toLowerCase().includes(query);
-      const locationMatch = (client.location || '').toLowerCase().includes(query);
-      return nameMatch || emailMatch || locationMatch;
-    });
+  if (!allBirthdayClients || allBirthdayClients.length === 0){
+    if (countEl) countEl.textContent = '';
+    return;
+  }
 
-    renderBirthdayClientsList(filtered);
-    const count = filtered.length;
-    const total = allBirthdayClients.length;
-    document.getElementById('birthdaySearchCount').textContent = count === total ? '' : `${count} of ${total} match`;
-  } catch (e) {
-    console.error('Birthday filter error:', e);
+  if (!query) {
+    renderBirthdayClientsList(allBirthdayClients);
+    if (countEl) countEl.textContent = '';
+    return;
+  }
+
+  const filtered = allBirthdayClients.filter(client => {
+    const nameMatch = (client.fullName || '').toLowerCase().includes(query);
+    const emailMatch = (client.email || '').toLowerCase().includes(query);
+    const locationMatch = (client.location || '').toLowerCase().includes(query);
+    return nameMatch || emailMatch || locationMatch;
+  });
+
+  renderBirthdayClientsList(filtered);
+  if (countEl) {
+    countEl.textContent = filtered.length === allBirthdayClients.length ? '' : `${filtered.length} of ${allBirthdayClients.length} match`;
   }
 }
 
@@ -2829,11 +2820,14 @@ function renderDuesClientsList(clients, append = false){
 
   let html = '<div style="display:flex;flex-direction:column;gap:6px;">';
   pageClients.forEach(client => {
-    const checked = client.sendDues ? 'checked' : '';
-    const dataKey = 'dues-' + client.policyNumber.replace(/[^a-zA-Z0-9-_]/g, '-');
+    const policyKey = String(client.policyNumber);
+    // Use a pending (unsaved) change if one exists, otherwise the server value
+    const isChecked = duesPendingChanges.hasOwnProperty(policyKey) ? duesPendingChanges[policyKey] : !!client.sendDues;
+    const checked = isChecked ? 'checked' : '';
+    const dataKey = 'dues-' + policyKey.replace(/[^a-zA-Z0-9-_]/g, '-');
     html += `
       <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#FDF8F0;border-radius:8px;cursor:pointer;transition:background .15s;">
-        <input type="checkbox" ${checked} data-key="${dataKey}" data-policy="${client.policyNumber}" class="dues-preference-toggle" onchange="void(0);" style="width:18px;height:18px;cursor:pointer;">
+        <input type="checkbox" ${checked} data-key="${dataKey}" data-policy="${escapeHtml(policyKey)}" class="dues-preference-toggle" style="width:18px;height:18px;cursor:pointer;">
         <div style="flex:1;min-width:0;">
           <div style="font-weight:600;color:#0C447C;font-size:13px;">${escapeHtml(client.clientName)}</div>
           <div style="font-size:11px;color:#6B7280;">${escapeHtml(client.product)} • Due: ${client.dueDate || 'N/A'}</div>
@@ -2853,10 +2847,11 @@ function renderDuesClientsList(clients, append = false){
   // Update offset
   duesPageOffset = end;
 
-  // Add toggle listeners
-  document.querySelectorAll('.dues-preference-toggle').forEach(checkbox => {
+  // Add toggle listeners — record every change into the pending map so
+  // it survives re-renders triggered by searching/filtering/scrolling.
+  container.querySelectorAll('.dues-preference-toggle').forEach(checkbox => {
     checkbox.addEventListener('change', function(){
-      // Just mark as changed, save on button click
+      duesPendingChanges[this.dataset.policy] = this.checked;
     });
   });
   
@@ -2909,11 +2904,13 @@ function renderBirthdayClientsList(clients, append = false){
 
   let html = '<div style="display:flex;flex-direction:column;gap:6px;">';
   pageClients.forEach(client => {
-    const checked = client.sendBirthday ? 'checked' : '';
-    const dataKey = 'bday-' + client.email.replace(/[^a-zA-Z0-9-_]/g, '-');
+    const emailKey = String(client.email);
+    const isChecked = birthdayPendingChanges.hasOwnProperty(emailKey) ? birthdayPendingChanges[emailKey] : !!client.sendBirthday;
+    const checked = isChecked ? 'checked' : '';
+    const dataKey = 'bday-' + emailKey.replace(/[^a-zA-Z0-9-_]/g, '-');
     html += `
       <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#FDF8F0;border-radius:8px;cursor:pointer;transition:background .15s;">
-        <input type="checkbox" ${checked} data-key="${dataKey}" data-email="${client.email}" class="birthday-preference-toggle" onchange="void(0);" style="width:18px;height:18px;cursor:pointer;">
+        <input type="checkbox" ${checked} data-key="${dataKey}" data-email="${escapeHtml(emailKey)}" class="birthday-preference-toggle" style="width:18px;height:18px;cursor:pointer;">
         <div style="flex:1;min-width:0;">
           <div style="font-weight:600;color:#0C447C;font-size:13px;">${escapeHtml(client.fullName)}</div>
           <div style="font-size:11px;color:#6B7280;">Birthday: ${client.dateOfBirth || 'N/A'}</div>
@@ -2932,10 +2929,11 @@ function renderBirthdayClientsList(clients, append = false){
   // Update offset
   birthdayPageOffset = end;
 
-  // Add toggle listeners
-  document.querySelectorAll('.birthday-preference-toggle').forEach(checkbox => {
+  // Add toggle listeners — record every change into the pending map so
+  // it survives re-renders triggered by searching/filtering/scrolling.
+  container.querySelectorAll('.birthday-preference-toggle').forEach(checkbox => {
     checkbox.addEventListener('change', function(){
-      // Just mark as changed, save on button click
+      birthdayPendingChanges[this.dataset.email] = this.checked;
     });
   });
   
@@ -2972,17 +2970,17 @@ async function refreshDuesClientList(){
   sub.textContent = '🔄 Refreshing…';
   const clients = await fetchDuesClientList();
   allDuesClients = clients; // Store for filtering
+  // Fresh pull from the sheet — clear any unsaved local toggles so we don't
+  // show stale state that no longer matches what's on the server.
+  Object.keys(duesPendingChanges).forEach(k => delete duesPendingChanges[k]);
   renderDuesClientsList(clients);
   sub.textContent = clients.length + ' client(s) loaded';
-  
-  // Reset search input
+
   const searchInput = document.getElementById('duesSearchInput');
   if (searchInput) {
     searchInput.value = '';
-    document.getElementById('duesSearchCount').textContent = '';
-    // Attach listener directly
-    searchInput.removeEventListener('input', filterDuesClients);
-    searchInput.addEventListener('input', filterDuesClients);
+    const countEl = document.getElementById('duesSearchCount');
+    if (countEl) countEl.textContent = '';
   }
 }
 
@@ -2991,40 +2989,46 @@ async function refreshBirthdayClientList(){
   sub.textContent = '🔄 Refreshing…';
   const clients = await fetchBirthdayClientList();
   allBirthdayClients = clients; // Store for filtering
+  Object.keys(birthdayPendingChanges).forEach(k => delete birthdayPendingChanges[k]);
   renderBirthdayClientsList(clients);
   sub.textContent = clients.length + ' client(s) loaded';
-  
-  // Reset search input
+
   const searchInput = document.getElementById('birthdaySearchInput');
   if (searchInput) {
     searchInput.value = '';
-    document.getElementById('birthdaySearchCount').textContent = '';
-    // Attach listener directly
-    searchInput.removeEventListener('input', filterBirthdayClients);
-    searchInput.addEventListener('input', filterBirthdayClients);
+    const countEl = document.getElementById('birthdaySearchCount');
+    if (countEl) countEl.textContent = '';
   }
 }
 
 async function saveDuesPreferences(){
   const status = document.getElementById('duesClientsStatus');
-  status.textContent = '💾 Saving…';
+  const changedPolicies = Object.keys(duesPendingChanges);
+
+  if (changedPolicies.length === 0){
+    status.textContent = 'No changes to save.';
+    status.style.color = '#6B7280';
+    status.style.display = 'block';
+    setTimeout(() => { status.style.display = 'none'; }, 3000);
+    return;
+  }
+
+  status.textContent = '💾 Saving ' + changedPolicies.length + ' change(s)…';
+  status.style.color = '#0C447C';
   status.style.display = 'block';
 
   const scriptUrl = localStorage.getItem(SCRIPT_URL_STORAGE_KEY);
   if (!scriptUrl) {
-    status.textContent = '❌ Error: Apps Script URL not configured';
+    status.textContent = '❌ Error: Apps Script URL not configured. Go to Settings.';
     status.style.color = '#EB5757';
     return;
   }
 
   let count = 0;
   let failed = 0;
-  const checkboxes = document.querySelectorAll('.dues-preference-toggle');
 
-  for (const checkbox of checkboxes){
-    const policyNumber = checkbox.dataset.policy;
-    const enabled = checkbox.checked;
-
+  for (const policyNumber of changedPolicies){
+    const enabled = duesPendingChanges[policyNumber];
     try{
       const res = await fetch(scriptUrl, {
         method: 'POST',
@@ -3036,38 +3040,53 @@ async function saveDuesPreferences(){
         })
       });
       const data = await res.json();
-      if (data.success) count++;
-      else failed++;
+      if (data.success) {
+        count++;
+        // Update source-of-truth array so future renders reflect this
+        const client = allDuesClients.find(c => String(c.policyNumber) === String(policyNumber));
+        if (client) client.sendDues = enabled;
+        delete duesPendingChanges[policyNumber];
+      } else {
+        failed++;
+      }
     }catch(e){
       failed++;
     }
   }
 
-  status.textContent = '✓ Saved: ' + count + ' preference(s) updated' + (failed > 0 ? ' (' + failed + ' failed)' : '');
+  status.textContent = '✓ Saved: ' + count + ' preference(s) updated' + (failed > 0 ? ' (' + failed + ' failed — check your Apps Script deployment)' : '');
   status.style.color = failed > 0 ? '#EB5757' : '#27AE60';
-  setTimeout(() => { status.style.display = 'none'; }, 4000);
+  setTimeout(() => { status.style.display = 'none'; }, 5000);
 }
 
 async function saveBirthdayPreferences(){
   const status = document.getElementById('birthdayClientsStatus');
-  status.textContent = '💾 Saving…';
+  const changedEmails = Object.keys(birthdayPendingChanges);
+
+  if (changedEmails.length === 0){
+    status.textContent = 'No changes to save.';
+    status.style.color = '#6B7280';
+    status.style.display = 'block';
+    setTimeout(() => { status.style.display = 'none'; }, 3000);
+    return;
+  }
+
+  status.textContent = '💾 Saving ' + changedEmails.length + ' change(s)…';
+  status.style.color = '#0C447C';
   status.style.display = 'block';
 
   const scriptUrl = localStorage.getItem(SCRIPT_URL_STORAGE_KEY);
   if (!scriptUrl) {
-    status.textContent = '❌ Error: Apps Script URL not configured';
+    status.textContent = '❌ Error: Apps Script URL not configured. Go to Settings.';
     status.style.color = '#EB5757';
     return;
   }
 
   let count = 0;
   let failed = 0;
-  const checkboxes = document.querySelectorAll('.birthday-preference-toggle');
 
-  for (const checkbox of checkboxes){
-    const email = checkbox.dataset.email;
-    const enabled = checkbox.checked;
-
+  for (const email of changedEmails){
+    const enabled = birthdayPendingChanges[email];
     try{
       const res = await fetch(scriptUrl, {
         method: 'POST',
@@ -3079,16 +3098,22 @@ async function saveBirthdayPreferences(){
         })
       });
       const data = await res.json();
-      if (data.success) count++;
-      else failed++;
+      if (data.success) {
+        count++;
+        const client = allBirthdayClients.find(c => String(c.email) === String(email));
+        if (client) client.sendBirthday = enabled;
+        delete birthdayPendingChanges[email];
+      } else {
+        failed++;
+      }
     }catch(e){
       failed++;
     }
   }
 
-  status.textContent = '✓ Saved: ' + count + ' preference(s) updated' + (failed > 0 ? ' (' + failed + ' failed)' : '');
+  status.textContent = '✓ Saved: ' + count + ' preference(s) updated' + (failed > 0 ? ' (' + failed + ' failed — check your Apps Script deployment)' : '');
   status.style.color = failed > 0 ? '#EB5757' : '#27AE60';
-  setTimeout(() => { status.style.display = 'none'; }, 4000);
+  setTimeout(() => { status.style.display = 'none'; }, 5000);
 }
 
 // Add clients section functionality
@@ -3141,11 +3166,21 @@ function setupClientsTab(){
   if (duesSearchInput) {
     duesSearchInput.addEventListener('input', filterDuesClients);
   }
-  
+  document.getElementById('duesSearchClearBtn')?.addEventListener('click', function(){
+    if (duesSearchInput) duesSearchInput.value = '';
+    filterDuesClients();
+    if (duesSearchInput) duesSearchInput.focus();
+  });
+
   const birthdaySearchInput = document.getElementById('birthdaySearchInput');
   if (birthdaySearchInput) {
     birthdaySearchInput.addEventListener('input', filterBirthdayClients);
   }
+  document.getElementById('birthdaySearchClearBtn')?.addEventListener('click', function(){
+    if (birthdaySearchInput) birthdaySearchInput.value = '';
+    filterBirthdayClients();
+    if (birthdaySearchInput) birthdaySearchInput.focus();
+  });
 
   // Collapse toggles
   document.getElementById('toggleDuesClients')?.addEventListener('click', function(){
