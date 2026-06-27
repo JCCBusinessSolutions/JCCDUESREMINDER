@@ -868,6 +868,66 @@
     </div>
 
     <!-- ============================================================
+         CLIENT MANAGEMENT — Manage dues & birthday reminders per client
+         ============================================================ -->
+    <div id="page-clients" style="display:none;">
+
+      <div class="card" id="clientsIntroCard">
+        <h2>📋 Manage Your Clients</h2>
+        <p class="sub">Choose which clients will receive dues reminders and birthday greetings. Toggle off any clients you don't want to reach out to automatically.</p>
+      </div>
+
+      <!-- DUES CLIENTS -->
+      <div class="card" id="duesClientsCard">
+        <div class="card-header-row" id="duesClientsHeader">
+          <h2 style="margin:0;">Dues Reminders</h2>
+          <button class="collapse-toggle" id="toggleDuesClients" aria-label="Collapse">&#8943;</button>
+        </div>
+        <div id="duesClientsBody">
+          <div style="padding:12px 16px;border-bottom:1px solid #e7dfcf;">
+            <div style="position:relative;">
+              <input type="text" id="duesSearchInput" placeholder="🔍 Search by name..." style="width:100%;padding:10px 36px 10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
+              <button onclick="document.getElementById('duesSearchInput').value=''; filterDuesClients();" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#999;font-size:16px;padding:4px;">✕</button>
+            </div>
+            <div style="font-size:11px;color:#6b7280;margin-top:8px;" id="duesSearchCount"></div>
+          </div>
+          <p class="sub" id="duesClientsSub">Loading your clients…</p>
+          <div id="duesClientsList"></div>
+          <div class="row" style="margin-top:12px;">
+            <button class="btn-primary" id="refreshDuesClients" style="display:flex;align-items:center;justify-content:center;gap:7px;">🔄 REFRESH LIST</button>
+            <button class="btn-gold" id="saveDuesPreferences" style="display:flex;align-items:center;justify-content:center;gap:7px;margin-left:8px;">✓ SAVE CHANGES</button>
+          </div>
+          <div class="status" id="duesClientsStatus"></div>
+        </div>
+      </div>
+
+      <!-- BIRTHDAY CLIENTS -->
+      <div class="card" id="birthdayClientsCard">
+        <div class="card-header-row" id="birthdayClientsHeader">
+          <h2 style="margin:0;">Birthday Greetings</h2>
+          <button class="collapse-toggle" id="toggleBirthdayClients" aria-label="Collapse">&#8943;</button>
+        </div>
+        <div id="birthdayClientsBody">
+          <div style="padding:12px 16px;border-bottom:1px solid #e7dfcf;">
+            <div style="position:relative;">
+              <input type="text" id="birthdaySearchInput" placeholder="🔍 Search by name..." style="width:100%;padding:10px 36px 10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
+              <button onclick="document.getElementById('birthdaySearchInput').value=''; filterBirthdayClients();" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#999;font-size:16px;padding:4px;">✕</button>
+            </div>
+            <div style="font-size:11px;color:#6b7280;margin-top:8px;" id="birthdaySearchCount"></div>
+          </div>
+          <p class="sub" id="birthdayClientsSub">Loading your clients…</p>
+          <div id="birthdayClientsList"></div>
+          <div class="row" style="margin-top:12px;">
+            <button class="btn-primary" id="refreshBirthdayClients" style="display:flex;align-items:center;justify-content:center;gap:7px;">🔄 REFRESH LIST</button>
+            <button class="btn-gold" id="saveBirthdayPreferences" style="display:flex;align-items:center;justify-content:center;gap:7px;margin-left:8px;">✓ SAVE CHANGES</button>
+          </div>
+          <div class="status" id="birthdayClientsStatus"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================
          SETTINGS (existing real functionality — Setup / Branding / Password)
          ============================================================ -->
     <div id="settingsSection" data-section="settings" class="mt-2">
@@ -985,6 +1045,7 @@
   <div class="mobile-nav-item active" data-nav="dues" onclick="scrollToSection('dues')"><span class="ico">📊</span>Client Dues</div>
   <div class="mobile-nav-item" data-nav="birthday" onclick="scrollToSection('birthday')"><span class="ico">🎂</span>Birthdays</div>
   <div class="mobile-nav-item" data-nav="upload" onclick="scrollToSection('upload')"><span class="ico">📤</span>Upload</div>
+  <div class="mobile-nav-item" data-nav="clients" onclick="scrollToSection('clients')"><span class="ico">👥</span>Clients</div>
   <div class="mobile-nav-item" id="mobileLogoutLink" onclick="logoutUser()" style="color:#d32f2f;"><span class="ico">🚪</span>Logout</div>
 </nav>
 
@@ -2559,9 +2620,284 @@ document.getElementById('gateEmail').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') accessGate();
 });
 
+// ============================================================
+// CLIENT PREFERENCE MANAGEMENT & SEARCH FILTER
+// ============================================================
+
+// Store full client lists for filtering
+let allDuesClients = [];
+let allBirthdayClients = [];
+
+function filterDuesClients(){
+  const query = document.getElementById('duesSearchInput')?.value.toLowerCase() || '';
+  const container = document.getElementById('duesClientsList');
+  
+  if (!query){
+    // Show all clients
+    renderDuesClientsList(allDuesClients);
+    document.getElementById('duesSearchCount').textContent = '';
+    return;
+  }
+
+  // Filter clients by name
+  const filtered = allDuesClients.filter(client => 
+    client.clientName.toLowerCase().includes(query)
+  );
+
+  renderDuesClientsList(filtered);
+  document.getElementById('duesSearchCount').textContent = 
+    `${filtered.length} of ${allDuesClients.length} client(s) found`;
+}
+
+function filterBirthdayClients(){
+  const query = document.getElementById('birthdaySearchInput')?.value.toLowerCase() || '';
+  const container = document.getElementById('birthdayClientsList');
+  
+  if (!query){
+    // Show all clients
+    renderBirthdayClientsList(allBirthdayClients);
+    document.getElementById('birthdaySearchCount').textContent = '';
+    return;
+  }
+
+  // Filter clients by name
+  const filtered = allBirthdayClients.filter(client => 
+    client.fullName.toLowerCase().includes(query)
+  );
+
+  renderBirthdayClientsList(filtered);
+  document.getElementById('birthdaySearchCount').textContent = 
+    `${filtered.length} of ${allBirthdayClients.length} client(s) found`;
+}
+
+async function fetchDuesClientList(){
+  try{
+    const res = await fetch(DEFAULT_SCRIPT_URL + '?action=getDuesClientList');
+    const data = await res.json();
+    return data.clients || [];
+  }catch(e){
+    showToast('Error loading dues clients: ' + e.message);
+    return [];
+  }
+}
+
+async function fetchBirthdayClientList(){
+  try{
+    const res = await fetch(DEFAULT_SCRIPT_URL + '?action=getBirthdayClientList');
+    const data = await res.json();
+    return data.clients || [];
+  }catch(e){
+    showToast('Error loading birthday clients: ' + e.message);
+    return [];
+  }
+}
+
+function renderDuesClientsList(clients){
+  const container = document.getElementById('duesClientsList');
+  if (!clients || clients.length === 0){
+    container.innerHTML = '<p style="color:#9CA3AF;font-size:13px;">No clients found.</p>';
+    return;
+  }
+
+  let html = '<div style="display:flex;flex-direction:column;gap:6px;">';
+  clients.forEach(client => {
+    const checked = client.sendDues ? 'checked' : '';
+    const dataKey = 'dues-' + client.policyNumber.replace(/[^a-zA-Z0-9-_]/g, '-');
+    html += `
+      <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#FDF8F0;border-radius:8px;cursor:pointer;transition:background .15s;">
+        <input type="checkbox" ${checked} data-key="${dataKey}" data-policy="${client.policyNumber}" class="dues-preference-toggle" style="width:18px;height:18px;cursor:pointer;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;color:#0C447C;font-size:13px;">${escapeHtml(client.clientName)}</div>
+          <div style="font-size:11px;color:#6B7280;">${escapeHtml(client.product)} • Due: ${client.dueDate || 'N/A'}</div>
+        </div>
+        <div style="font-size:13px;font-weight:600;color:#C99A3B;">PHP ${Number(client.premiumAmount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}</div>
+      </label>
+    `;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+
+  // Add toggle listeners
+  document.querySelectorAll('.dues-preference-toggle').forEach(checkbox => {
+    checkbox.addEventListener('change', function(){
+      // Just mark as changed, save on button click
+    });
+  });
+}
+
+function renderBirthdayClientsList(clients){
+  const container = document.getElementById('birthdayClientsList');
+  if (!clients || clients.length === 0){
+    container.innerHTML = '<p style="color:#9CA3AF;font-size:13px;">No clients found.</p>';
+    return;
+  }
+
+  let html = '<div style="display:flex;flex-direction:column;gap:6px;">';
+  clients.forEach(client => {
+    const checked = client.sendBirthday ? 'checked' : '';
+    const dataKey = 'bday-' + client.email.replace(/[^a-zA-Z0-9-_]/g, '-');
+    html += `
+      <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#FDF8F0;border-radius:8px;cursor:pointer;transition:background .15s;">
+        <input type="checkbox" ${checked} data-key="${dataKey}" data-email="${client.email}" class="birthday-preference-toggle" style="width:18px;height:18px;cursor:pointer;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;color:#0C447C;font-size:13px;">${escapeHtml(client.fullName)}</div>
+          <div style="font-size:11px;color:#6B7280;">Birthday: ${client.dateOfBirth || 'N/A'}</div>
+        </div>
+      </label>
+    `;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+
+  document.querySelectorAll('.birthday-preference-toggle').forEach(checkbox => {
+    checkbox.addEventListener('change', function(){
+      // Just mark as changed, save on button click
+    });
+  });
+}
+
+async function refreshDuesClientList(){
+  const sub = document.getElementById('duesClientsSub');
+  sub.textContent = '🔄 Refreshing…';
+  const clients = await fetchDuesClientList();
+  allDuesClients = clients; // Store for filtering
+  renderDuesClientsList(clients);
+  sub.textContent = clients.length + ' client(s) loaded';
+  // Reset search
+  const searchInput = document.getElementById('duesSearchInput');
+  if (searchInput) {
+    searchInput.value = '';
+    document.getElementById('duesSearchCount').textContent = '';
+  }
+}
+
+async function refreshBirthdayClientList(){
+  const sub = document.getElementById('birthdayClientsSub');
+  sub.textContent = '🔄 Refreshing…';
+  const clients = await fetchBirthdayClientList();
+  allBirthdayClients = clients; // Store for filtering
+  renderBirthdayClientsList(clients);
+  sub.textContent = clients.length + ' client(s) loaded';
+  // Reset search
+  const searchInput = document.getElementById('birthdaySearchInput');
+  if (searchInput) {
+    searchInput.value = '';
+    document.getElementById('birthdaySearchCount').textContent = '';
+  }
+}
+
+async function saveDuesPreferences(){
+  const status = document.getElementById('duesClientsStatus');
+  status.textContent = '💾 Saving…';
+  status.style.display = 'block';
+
+  let count = 0;
+  let failed = 0;
+  const checkboxes = document.querySelectorAll('.dues-preference-toggle');
+
+  for (const checkbox of checkboxes){
+    const policyNumber = checkbox.dataset.policy;
+    const enabled = checkbox.checked;
+
+    try{
+      const res = await fetch(DEFAULT_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'setDuesPreference',
+          policyNumber: policyNumber,
+          enabled: enabled
+        })
+      });
+      const data = await res.json();
+      if (data.success) count++;
+      else failed++;
+    }catch(e){
+      failed++;
+    }
+  }
+
+  status.textContent = '✓ Saved: ' + count + ' preference(s) updated' + (failed > 0 ? ' (' + failed + ' failed)' : '');
+  status.style.color = failed > 0 ? '#EB5757' : '#27AE60';
+  setTimeout(() => { status.style.display = 'none'; }, 4000);
+}
+
+async function saveBirthdayPreferences(){
+  const status = document.getElementById('birthdayClientsStatus');
+  status.textContent = '💾 Saving…';
+  status.style.display = 'block';
+
+  let count = 0;
+  let failed = 0;
+  const checkboxes = document.querySelectorAll('.birthday-preference-toggle');
+
+  for (const checkbox of checkboxes){
+    const email = checkbox.dataset.email;
+    const enabled = checkbox.checked;
+
+    try{
+      const res = await fetch(DEFAULT_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'setBirthdayPreference',
+          email: email,
+          enabled: enabled
+        })
+      });
+      const data = await res.json();
+      if (data.success) count++;
+      else failed++;
+    }catch(e){
+      failed++;
+    }
+  }
+
+  status.textContent = '✓ Saved: ' + count + ' preference(s) updated' + (failed > 0 ? ' (' + failed + ' failed)' : '');
+  status.style.color = failed > 0 ? '#EB5757' : '#27AE60';
+  setTimeout(() => { status.style.display = 'none'; }, 4000);
+}
+
+// Add clients section functionality
+function setupClientsTab(){
+  // Wire up buttons
+  document.getElementById('refreshDuesClients')?.addEventListener('click', refreshDuesClientList);
+  document.getElementById('refreshBirthdayClients')?.addEventListener('click', refreshBirthdayClientList);
+  document.getElementById('saveDuesPreferences')?.addEventListener('click', saveDuesPreferences);
+  document.getElementById('saveBirthdayPreferences')?.addEventListener('click', saveBirthdayPreferences);
+
+  // Search input listeners
+  document.getElementById('duesSearchInput')?.addEventListener('input', filterDuesClients);
+  document.getElementById('birthdaySearchInput')?.addEventListener('input', filterBirthdayClients);
+
+  // Collapse toggles
+  document.getElementById('toggleDuesClients')?.addEventListener('click', function(){
+    const body = document.getElementById('duesClientsBody');
+    body.classList.toggle('collapsed');
+    this.classList.toggle('collapsed');
+  });
+
+  document.getElementById('toggleBirthdayClients')?.addEventListener('click', function(){
+    const body = document.getElementById('birthdayClientsBody');
+    body.classList.toggle('collapsed');
+    this.classList.toggle('collapsed');
+  });
+
+  // Setup sidebar nav
+  document.querySelectorAll('[data-nav="clients"]').forEach(el => {
+    el.addEventListener('click', function(e){
+      e.preventDefault();
+      setActiveTab('clients');
+      refreshDuesClientList();
+      refreshBirthdayClientList();
+    });
+  });
+}
+
 // Initialize on page load
 (async function() {
   await fetchAccessList();
+  setupClientsTab();
   if (!checkAuth()) {
     document.getElementById('gateScreen').style.display = 'flex';
   }
