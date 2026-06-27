@@ -361,19 +361,20 @@
   body.dark-mode #birthdayClientsList label[style*="background:#FDF8F0"]{
     background:#16233A !important; border: 1px solid #27374D !important;
   }
-  /* Dark mode for client list item text */
+  /* Dark mode for client list item text - names white */
   body.dark-mode #duesClientsList div[style*="color:#0C447C"],
   body.dark-mode #birthdayClientsList div[style*="color:#0C447C"]{
-    color:#5B8BC4 !important;
+    color:#FFFFFF !important;
   }
+  /* Dark mode for details text - light gray */
   body.dark-mode #duesClientsList div[style*="color:#6B7280"],
   body.dark-mode #birthdayClientsList div[style*="color:#6B7280"]{
-    color:#8DA0BC !important;
+    color:#E8EDF5 !important;
   }
-  /* Dark mode for client list item text - keep client names navy blue */
+  /* Dark mode for client list item text - keep names white */
   body.dark-mode #duesClientsList div[style*="flex:1"] div[style*="color:#0C447C"],
   body.dark-mode #birthdayClientsList div[style*="flex:1"] div[style*="color:#0C447C"]{
-    color:#5B8BC4 !important;
+    color:#FFFFFF !important;
   }
   /* Dark mode for premium amounts - keep gold */
   body.dark-mode #duesClientsList label > div:last-child,
@@ -968,7 +969,7 @@
         <div id="duesClientsBody">
           <div style="padding:12px 16px;border-bottom:1px solid #e7dfcf;">
             <div style="position:relative;">
-              <input type="text" id="duesSearchInput" placeholder="🔍 Search by name..." onkeyup="filterDuesClients()" style="width:100%;padding:10px 36px 10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
+              <input type="text" id="duesSearchInput" placeholder="🔍 Search by name..." oninput="filterDuesClients()" style="width:100%;padding:10px 36px 10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
               <button onclick="document.getElementById('duesSearchInput').value=''; filterDuesClients();" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#999;font-size:16px;padding:4px;">✕</button>
             </div>
             <div style="font-size:11px;color:#6b7280;margin-top:8px;" id="duesSearchCount"></div>
@@ -992,7 +993,7 @@
         <div id="birthdayClientsBody">
           <div style="padding:12px 16px;border-bottom:1px solid #e7dfcf;">
             <div style="position:relative;">
-              <input type="text" id="birthdaySearchInput" placeholder="🔍 Search by name..." onkeyup="filterBirthdayClients()" style="width:100%;padding:10px 36px 10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
+              <input type="text" id="birthdaySearchInput" placeholder="🔍 Search by name..." oninput="filterBirthdayClients()" style="width:100%;padding:10px 36px 10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
               <button onclick="document.getElementById('birthdaySearchInput').value=''; filterBirthdayClients();" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#999;font-size:16px;padding:4px;">✕</button>
             </div>
             <div style="font-size:11px;color:#6b7280;margin-top:8px;" id="birthdaySearchCount"></div>
@@ -2702,51 +2703,77 @@ let birthdayPageOffset = 0;
 const CLIENTS_PER_PAGE = 10;
 
 function filterDuesClients(){
-  const query = (document.getElementById('duesSearchInput')?.value || '').toLowerCase().trim();
-  
-  if (!query) {
-    // Reset to full list
-    renderDuesClientsList(allDuesClients);
-    document.getElementById('duesSearchCount').textContent = '';
-    return;
+  try {
+    const input = document.getElementById('duesSearchInput');
+    if (!input) return;
+    
+    const query = (input.value || '').toLowerCase().trim();
+    
+    if (!query) {
+      // Reset to full list
+      renderDuesClientsList(allDuesClients);
+      document.getElementById('duesSearchCount').textContent = '';
+      return;
+    }
+
+    // Ensure allDuesClients exists
+    if (!allDuesClients || allDuesClients.length === 0) {
+      console.warn('No clients loaded for filtering');
+      return;
+    }
+
+    // Filter by name, product, or policy number
+    const filtered = allDuesClients.filter(client => {
+      const nameMatch = (client.clientName || '').toLowerCase().includes(query);
+      const productMatch = (client.product || '').toLowerCase().includes(query);
+      const policyMatch = (client.policyNumber || '').toLowerCase().includes(query);
+      return nameMatch || productMatch || policyMatch;
+    });
+
+    renderDuesClientsList(filtered);
+    const count = filtered.length;
+    const total = allDuesClients.length;
+    document.getElementById('duesSearchCount').textContent = count === total ? '' : `${count} of ${total} match`;
+  } catch (e) {
+    console.error('Filter error:', e);
   }
-
-  // Filter by name, product, or policy number
-  const filtered = allDuesClients.filter(client => {
-    const nameMatch = (client.clientName || '').toLowerCase().includes(query);
-    const productMatch = (client.product || '').toLowerCase().includes(query);
-    const policyMatch = (client.policyNumber || '').toLowerCase().includes(query);
-    return nameMatch || productMatch || policyMatch;
-  });
-
-  renderDuesClientsList(filtered);
-  const count = filtered.length;
-  const total = allDuesClients.length;
-  document.getElementById('duesSearchCount').textContent = count === total ? '' : `${count} of ${total} match`;
 }
 
 function filterBirthdayClients(){
-  const query = (document.getElementById('birthdaySearchInput')?.value || '').toLowerCase().trim();
-  
-  if (!query) {
-    // Reset to full list
-    renderBirthdayClientsList(allBirthdayClients);
-    document.getElementById('birthdaySearchCount').textContent = '';
-    return;
+  try {
+    const input = document.getElementById('birthdaySearchInput');
+    if (!input) return;
+    
+    const query = (input.value || '').toLowerCase().trim();
+    
+    if (!query) {
+      // Reset to full list
+      renderBirthdayClientsList(allBirthdayClients);
+      document.getElementById('birthdaySearchCount').textContent = '';
+      return;
+    }
+
+    // Ensure allBirthdayClients exists
+    if (!allBirthdayClients || allBirthdayClients.length === 0) {
+      console.warn('No birthday clients loaded for filtering');
+      return;
+    }
+
+    // Filter by name, email, or location
+    const filtered = allBirthdayClients.filter(client => {
+      const nameMatch = (client.fullName || '').toLowerCase().includes(query);
+      const emailMatch = (client.email || '').toLowerCase().includes(query);
+      const locationMatch = (client.location || '').toLowerCase().includes(query);
+      return nameMatch || emailMatch || locationMatch;
+    });
+
+    renderBirthdayClientsList(filtered);
+    const count = filtered.length;
+    const total = allBirthdayClients.length;
+    document.getElementById('birthdaySearchCount').textContent = count === total ? '' : `${count} of ${total} match`;
+  } catch (e) {
+    console.error('Birthday filter error:', e);
   }
-
-  // Filter by name, email, or location
-  const filtered = allBirthdayClients.filter(client => {
-    const nameMatch = (client.fullName || '').toLowerCase().includes(query);
-    const emailMatch = (client.email || '').toLowerCase().includes(query);
-    const locationMatch = (client.location || '').toLowerCase().includes(query);
-    return nameMatch || emailMatch || locationMatch;
-  });
-
-  renderBirthdayClientsList(filtered);
-  const count = filtered.length;
-  const total = allBirthdayClients.length;
-  document.getElementById('birthdaySearchCount').textContent = count === total ? '' : `${count} of ${total} match`;
 }
 
 async function fetchDuesClientList(){
@@ -2804,7 +2831,7 @@ function renderDuesClientsList(clients, append = false){
     const dataKey = 'dues-' + client.policyNumber.replace(/[^a-zA-Z0-9-_]/g, '-');
     html += `
       <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#FDF8F0;border-radius:8px;cursor:pointer;transition:background .15s;">
-        <input type="checkbox" ${checked} data-key="${dataKey}" data-policy="${client.policyNumber}" class="dues-preference-toggle" style="width:18px;height:18px;cursor:pointer;">
+        <input type="checkbox" ${checked} data-key="${dataKey}" data-policy="${client.policyNumber}" class="dues-preference-toggle" onchange="void(0);" style="width:18px;height:18px;cursor:pointer;">
         <div style="flex:1;min-width:0;">
           <div style="font-weight:600;color:#0C447C;font-size:13px;">${escapeHtml(client.clientName)}</div>
           <div style="font-size:11px;color:#6B7280;">${escapeHtml(client.product)} • Due: ${client.dueDate || 'N/A'}</div>
@@ -2884,7 +2911,7 @@ function renderBirthdayClientsList(clients, append = false){
     const dataKey = 'bday-' + client.email.replace(/[^a-zA-Z0-9-_]/g, '-');
     html += `
       <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#FDF8F0;border-radius:8px;cursor:pointer;transition:background .15s;">
-        <input type="checkbox" ${checked} data-key="${dataKey}" data-email="${client.email}" class="birthday-preference-toggle" style="width:18px;height:18px;cursor:pointer;">
+        <input type="checkbox" ${checked} data-key="${dataKey}" data-email="${client.email}" class="birthday-preference-toggle" onchange="void(0);" style="width:18px;height:18px;cursor:pointer;">
         <div style="flex:1;min-width:0;">
           <div style="font-weight:600;color:#0C447C;font-size:13px;">${escapeHtml(client.fullName)}</div>
           <div style="font-size:11px;color:#6B7280;">Birthday: ${client.dateOfBirth || 'N/A'}</div>
