@@ -386,6 +386,19 @@
   body.dark-mode #birthdayClientsList p[style*="color:#9CA3AF"]{
     color:#8DA0BC !important;
   }
+  /* Dark mode for excluded-from-reminders summary boxes */
+  body.dark-mode #duesExcludedSummary, body.dark-mode #birthdayExcludedSummary{
+    background:#3A1F22 !important; border-color:#5C2B30 !important;
+  }
+  body.dark-mode #duesExcludedSummaryHeader, body.dark-mode #birthdayExcludedSummaryHeader{
+    color:#FF8A80 !important;
+  }
+  body.dark-mode #duesExcludedSummaryList, body.dark-mode #birthdayExcludedSummaryList{
+    color:#FFC2BC !important;
+  }
+  body.dark-mode #duesExcludedSummaryList div, body.dark-mode #birthdayExcludedSummaryList div{
+    border-color:rgba(255,255,255,0.1) !important;
+  }
   body.dark-mode .mobile-bottom-nav{ background:#16233A; border-color:#27374D; }
   body.dark-mode #fileDrop p{ color:#FFFFFF !important; }
   body.dark-mode #fileDrop p:last-of-type{ color:#8DA0BC !important; }
@@ -974,6 +987,10 @@
             </div>
             <div style="font-size:11px;color:#6b7280;margin-top:8px;" id="duesSearchCount"></div>
           </div>
+          <div id="duesExcludedSummary" style="display:none;margin:0 16px 12px;padding:10px 12px;background:#FDECEC;border:1px solid #F5C6CB;border-radius:8px;cursor:pointer;">
+            <div id="duesExcludedSummaryHeader" style="font-size:12px;font-weight:700;color:#C0392B;"></div>
+            <div id="duesExcludedSummaryList" style="display:none;margin-top:8px;font-size:12px;color:#7B241C;"></div>
+          </div>
           <p class="sub" id="duesClientsSub">Loading your clients…</p>
           <div id="duesClientsList" style="max-height:400px;overflow-y:auto;padding:12px 16px;border:1px solid #e7dfcf;border-radius:6px;"></div>
           <div class="row" style="margin-top:12px;">
@@ -997,6 +1014,10 @@
               <button type="button" id="birthdaySearchClearBtn" style="width:auto;min-height:0;flex-shrink:0;background:none;border:1px solid #ddd;border-radius:8px;cursor:pointer;color:#999;font-size:16px;padding:8px 12px;">✕</button>
             </div>
             <div style="font-size:11px;color:#6b7280;margin-top:8px;" id="birthdaySearchCount"></div>
+          </div>
+          <div id="birthdayExcludedSummary" style="display:none;margin:0 16px 12px;padding:10px 12px;background:#FDECEC;border:1px solid #F5C6CB;border-radius:8px;cursor:pointer;">
+            <div id="birthdayExcludedSummaryHeader" style="font-size:12px;font-weight:700;color:#C0392B;"></div>
+            <div id="birthdayExcludedSummaryList" style="display:none;margin-top:8px;font-size:12px;color:#7B241C;"></div>
           </div>
           <p class="sub" id="birthdayClientsSub">Loading your clients…</p>
           <div id="birthdayClientsList" style="max-height:400px;overflow-y:auto;padding:12px 16px;border:1px solid #e7dfcf;border-radius:6px;"></div>
@@ -2702,6 +2723,84 @@ let duesPageOffset = 0;
 let birthdayPageOffset = 0;
 const CLIENTS_PER_PAGE = 10;
 
+// Whether the "excluded from reminders" summary box is expanded
+let duesExcludedExpanded = false;
+let birthdayExcludedExpanded = false;
+
+// Effective on/off state for a client = an unsaved checkbox change if one
+// exists, otherwise whatever is already saved on the sheet.
+function getDuesEffectiveState(client){
+  const key = String(client.policyNumber);
+  return duesPendingChanges.hasOwnProperty(key) ? duesPendingChanges[key] : !!client.sendDues;
+}
+function getBirthdayEffectiveState(client){
+  const key = String(client.email);
+  return birthdayPendingChanges.hasOwnProperty(key) ? birthdayPendingChanges[key] : !!client.sendBirthday;
+}
+
+// Builds/refreshes the "X client(s) excluded from reminders" box so the
+// advisor always has an at-a-glance list of who will NOT receive emails —
+// including unticks that haven't been saved yet.
+function updateDuesExcludedSummary(){
+  const wrap = document.getElementById('duesExcludedSummary');
+  const headerEl = document.getElementById('duesExcludedSummaryHeader');
+  const listEl = document.getElementById('duesExcludedSummaryList');
+  if (!wrap || !headerEl || !listEl) return;
+
+  const excluded = allDuesClients.filter(c => !getDuesEffectiveState(c));
+
+  if (excluded.length === 0){
+    wrap.style.display = 'none';
+    return;
+  }
+
+  wrap.style.display = 'block';
+  const arrow = duesExcludedExpanded ? '▾' : '▸';
+  headerEl.textContent = `${arrow} 🔕 ${excluded.length} client(s) excluded from reminders — tap to ${duesExcludedExpanded ? 'hide' : 'view'}`;
+
+  if (duesExcludedExpanded){
+    const sorted = excluded.slice().sort((a, b) => (a.clientName || '').localeCompare(b.clientName || ''));
+    listEl.innerHTML = sorted.map(c =>
+      `<div style="padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.08);">
+         <strong>${escapeHtml(c.clientName)}</strong> — ${escapeHtml(c.product || '')} • Due: ${c.dueDate || 'N/A'}
+       </div>`
+    ).join('');
+    listEl.style.display = 'block';
+  } else {
+    listEl.style.display = 'none';
+  }
+}
+
+function updateBirthdayExcludedSummary(){
+  const wrap = document.getElementById('birthdayExcludedSummary');
+  const headerEl = document.getElementById('birthdayExcludedSummaryHeader');
+  const listEl = document.getElementById('birthdayExcludedSummaryList');
+  if (!wrap || !headerEl || !listEl) return;
+
+  const excluded = allBirthdayClients.filter(c => !getBirthdayEffectiveState(c));
+
+  if (excluded.length === 0){
+    wrap.style.display = 'none';
+    return;
+  }
+
+  wrap.style.display = 'block';
+  const arrow = birthdayExcludedExpanded ? '▾' : '▸';
+  headerEl.textContent = `${arrow} 🔕 ${excluded.length} client(s) excluded from reminders — tap to ${birthdayExcludedExpanded ? 'hide' : 'view'}`;
+
+  if (birthdayExcludedExpanded){
+    const sorted = excluded.slice().sort((a, b) => (a.fullName || '').localeCompare(b.fullName || ''));
+    listEl.innerHTML = sorted.map(c =>
+      `<div style="padding:5px 0;border-bottom:1px solid rgba(0,0,0,0.08);">
+         <strong>${escapeHtml(c.fullName)}</strong> — Birthday: ${c.dateOfBirth || 'N/A'}
+       </div>`
+    ).join('');
+    listEl.style.display = 'block';
+  } else {
+    listEl.style.display = 'none';
+  }
+}
+
 // Track unsaved checkbox changes so they survive re-renders caused by
 // searching/filtering or infinite scroll. Key = policyNumber / email.
 const duesPendingChanges = {};
@@ -2848,10 +2947,12 @@ function renderDuesClientsList(clients, append = false){
   duesPageOffset = end;
 
   // Add toggle listeners — record every change into the pending map so
-  // it survives re-renders triggered by searching/filtering/scrolling.
+  // it survives re-renders triggered by searching/filtering/scrolling,
+  // and refresh the "excluded from reminders" summary live.
   container.querySelectorAll('.dues-preference-toggle').forEach(checkbox => {
     checkbox.addEventListener('change', function(){
       duesPendingChanges[this.dataset.policy] = this.checked;
+      updateDuesExcludedSummary();
     });
   });
   
@@ -2930,10 +3031,12 @@ function renderBirthdayClientsList(clients, append = false){
   birthdayPageOffset = end;
 
   // Add toggle listeners — record every change into the pending map so
-  // it survives re-renders triggered by searching/filtering/scrolling.
+  // it survives re-renders triggered by searching/filtering/scrolling,
+  // and refresh the "excluded from reminders" summary live.
   container.querySelectorAll('.birthday-preference-toggle').forEach(checkbox => {
     checkbox.addEventListener('change', function(){
       birthdayPendingChanges[this.dataset.email] = this.checked;
+      updateBirthdayExcludedSummary();
     });
   });
   
@@ -2974,6 +3077,7 @@ async function refreshDuesClientList(){
   // show stale state that no longer matches what's on the server.
   Object.keys(duesPendingChanges).forEach(k => delete duesPendingChanges[k]);
   renderDuesClientsList(clients);
+  updateDuesExcludedSummary();
   sub.textContent = clients.length + ' client(s) loaded';
 
   const searchInput = document.getElementById('duesSearchInput');
@@ -2991,6 +3095,7 @@ async function refreshBirthdayClientList(){
   allBirthdayClients = clients; // Store for filtering
   Object.keys(birthdayPendingChanges).forEach(k => delete birthdayPendingChanges[k]);
   renderBirthdayClientsList(clients);
+  updateBirthdayExcludedSummary();
   sub.textContent = clients.length + ' client(s) loaded';
 
   const searchInput = document.getElementById('birthdaySearchInput');
@@ -3056,6 +3161,7 @@ async function saveDuesPreferences(){
 
   status.textContent = '✓ Saved: ' + count + ' preference(s) updated' + (failed > 0 ? ' (' + failed + ' failed — check your Apps Script deployment)' : '');
   status.style.color = failed > 0 ? '#EB5757' : '#27AE60';
+  updateDuesExcludedSummary();
   setTimeout(() => { status.style.display = 'none'; }, 5000);
 }
 
@@ -3113,6 +3219,7 @@ async function saveBirthdayPreferences(){
 
   status.textContent = '✓ Saved: ' + count + ' preference(s) updated' + (failed > 0 ? ' (' + failed + ' failed — check your Apps Script deployment)' : '');
   status.style.color = failed > 0 ? '#EB5757' : '#27AE60';
+  updateBirthdayExcludedSummary();
   setTimeout(() => { status.style.display = 'none'; }, 5000);
 }
 
@@ -3180,6 +3287,16 @@ function setupClientsTab(){
     if (birthdaySearchInput) birthdaySearchInput.value = '';
     filterBirthdayClients();
     if (birthdaySearchInput) birthdaySearchInput.focus();
+  });
+
+  // Tap the "X excluded from reminders" box to expand/collapse the name list
+  document.getElementById('duesExcludedSummary')?.addEventListener('click', function(){
+    duesExcludedExpanded = !duesExcludedExpanded;
+    updateDuesExcludedSummary();
+  });
+  document.getElementById('birthdayExcludedSummary')?.addEventListener('click', function(){
+    birthdayExcludedExpanded = !birthdayExcludedExpanded;
+    updateBirthdayExcludedSummary();
   });
 
   // Collapse toggles
