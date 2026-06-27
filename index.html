@@ -3032,7 +3032,7 @@ async function saveDuesPreferences(){
     try{
       const res = await fetch(scriptUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           action: 'setDuesPreference',
           policyNumber: policyNumber,
@@ -3090,7 +3090,7 @@ async function saveBirthdayPreferences(){
     try{
       const res = await fetch(scriptUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           action: 'setBirthdayPreference',
           email: email,
