@@ -327,6 +327,57 @@
   body.dark-mode input[type=password], body.dark-mode input[type=text]{
     background:#1B2A42; border-color:#27374D; color:#E8EDF5;
   }
+  /* Dark mode for password input labels and notes */
+  body.dark-mode label[style*="color:#0C447C"]{ color:#B8D4FF !important; }
+  body.dark-mode div[style*="color:#9CA3AF"]{ color:#8DA0BC !important; }
+  body.dark-mode div[style*="color:#27AE60"]{ color:#4ECB71 !important; }
+  body.dark-mode #saveExcelPasswordBtn{ color:#FFFFFF !important; }
+  /* Dark mode for search inputs and filters */
+  body.dark-mode #duesSearchInput, body.dark-mode #birthdaySearchInput{ 
+    background:#1B2A42 !important; border-color:#27374D !important; color:#E8EDF5 !important;
+  }
+  body.dark-mode #duesSearchInput::placeholder, body.dark-mode #birthdaySearchInput::placeholder{
+    color:#8DA0BC !important;
+  }
+  /* Dark mode for search count text */
+  body.dark-mode div[style*="color:#6b7280"], body.dark-mode div[style*="color:#6B7280"]{
+    color:#8DA0BC !important;
+  }
+  /* Dark mode for clients list containers */
+  body.dark-mode #duesClientsList, body.dark-mode #birthdayClientsList{
+    background:#0F1B2E !important; border-color:#27374D !important;
+  }
+  /* Dark mode for X button in search */
+  body.dark-mode button[style*="color:#999"]{
+    color:#8DA0BC !important;
+  }
+  body.dark-mode button[style*="color:#999"]:hover{
+    color:#B8D4FF !important;
+  }
+  /* Dark mode for client list items (dynamically generated labels) */
+  body.dark-mode #duesClientsList label[style*="background:#FDF8F0"],
+  body.dark-mode #birthdayClientsList label[style*="background:#FDF8F0"]{
+    background:#16233A !important; border: 1px solid #27374D !important;
+  }
+  /* Dark mode for client list item text */
+  body.dark-mode #duesClientsList div[style*="color:#0C447C"],
+  body.dark-mode #birthdayClientsList div[style*="color:#0C447C"]{
+    color:#B8D4FF !important;
+  }
+  body.dark-mode #duesClientsList div[style*="color:#6B7280"],
+  body.dark-mode #birthdayClientsList div[style*="color:#6B7280"]{
+    color:#8DA0BC !important;
+  }
+  /* Dark mode for premium amounts */
+  body.dark-mode #duesClientsList div[style*="color:#C99A3B"],
+  body.dark-mode #birthdayClientsList div[style*="color:#C99A3B"]{
+    color:#FFD966 !important;
+  }
+  /* Dark mode for "No clients found" message */
+  body.dark-mode #duesClientsList p[style*="color:#9CA3AF"],
+  body.dark-mode #birthdayClientsList p[style*="color:#9CA3AF"]{
+    color:#8DA0BC !important;
+  }
   body.dark-mode .mobile-bottom-nav{ background:#16233A; border-color:#27374D; }
   body.dark-mode #fileDrop p{ color:#FFFFFF !important; }
   body.dark-mode #fileDrop p:last-of-type{ color:#8DA0BC !important; }
@@ -633,13 +684,14 @@
         <p class="sub">From AHO, open Clients → All Clients → Download Report → Life Policy List. It will be decrypted, cleaned, and pushed straight into your Dues Tracker.</p>
 
         <!-- Excel Password Input -->
-        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end;">
-          <div style="flex:1;min-width:200px;">
+        <div style="margin-bottom:16px;">
+          <div style="margin-bottom:12px;">
             <label style="display:block;font-size:12px;font-weight:600;color:#0C447C;margin-bottom:6px;">Excel Password</label>
-            <input type="password" id="excelPasswordInput" placeholder="Enter your Excel file password" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
+            <input type="password" id="excelPasswordInput" placeholder="Enter your Excel file password" style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
           </div>
-          <button class="btn-gold" id="saveExcelPasswordBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;font-size:12px;">💾 SAVE</button>
+          <button class="btn-gold" id="saveExcelPasswordBtn" style="width:100%;display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 16px;font-size:14px;font-weight:600;color:#0C447C;">SAVE</button>
         </div>
+        <div style="font-size:11px;color:#9CA3AF;margin-bottom:16px;">Saved until you change it — you won't need to retype this every time.</div>
         <div style="font-size:11px;color:#27AE60;margin-bottom:12px;" id="passwordSavedStatus"></div>
 
         <div class="flex flex-col sm:flex-row gap-3 items-stretch">
@@ -803,13 +855,14 @@
           <p class="sub">From AHO, open Clients → All Clients → Download Report → Client List. It will be decrypted, cleaned, and pushed into your Birthday Tracker.</p>
 
           <!-- Excel Password Input -->
-          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end;">
-            <div style="flex:1;min-width:200px;">
+          <div style="margin-bottom:16px;">
+            <div style="margin-bottom:12px;">
               <label style="display:block;font-size:12px;font-weight:600;color:#0C447C;margin-bottom:6px;">Excel Password</label>
-              <input type="password" id="excelPasswordInput" placeholder="Enter your Excel file password" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
+              <input type="password" id="excelPasswordInput" placeholder="Enter your Excel file password" style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
             </div>
-            <button class="btn-gold" id="saveExcelPasswordBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;font-size:12px;">💾 SAVE</button>
+            <button class="btn-gold" id="saveExcelPasswordBtn" style="width:100%;display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 16px;font-size:14px;font-weight:600;color:#0C447C;">SAVE</button>
           </div>
+          <div style="font-size:11px;color:#9CA3AF;margin-bottom:16px;">Saved until you change it — you won't need to retype this every time.</div>
           <div style="font-size:11px;color:#27AE60;margin-bottom:12px;" id="passwordSavedStatus"></div>
 
           <div class="flex flex-col sm:flex-row gap-3 items-stretch">
@@ -1038,16 +1091,6 @@
         <div class="status" id="sendHourStatus"></div>
       </div>
 
-      <div class="card" id="passwordCard" style="display:none;">
-        <h2>Excel Password</h2>
-        <p class="sub">Saved until you change it — you won't need to retype this every time.</p>
-        <label for="pwField">Password</label>
-        <input type="password" id="pwField" placeholder="Enter the export password">
-        <div class="row">
-          <button class="btn-ghost" id="savePw">SAVE PASSWORD</button>
-        </div>
-        <div class="status" id="pwStatus"></div>
-      </div>
     </div>
 
     <!-- ============================================================
@@ -1503,12 +1546,10 @@ el('toggleConfig').addEventListener('click', () => {
   const c = el('configCard');
   const b = el('brandingCard');
   const h = el('sendHourCard');
-  const p = el('passwordCard');
   const show = c.style.display === 'none';
   c.style.display = show ? 'block' : 'none';
   b.style.display = show ? 'block' : 'none';
   h.style.display = show ? 'block' : 'none';
-  p.style.display = show ? 'block' : 'none';
 });
 
 el('saveScriptUrl').addEventListener('click', () => {
@@ -1517,22 +1558,10 @@ el('saveScriptUrl').addEventListener('click', () => {
   persistScriptUrl(val);
   updateSetupBlinkState();
   showStatus('configStatus','success','Saved \u2014 this browser will remember it next time you open the app.');
-  fetchSavedPassword().then(pw => { if (pw) el('pwField').value = pw; });
   fetchBrandConfig().then(config => populateBrandingFields(config));
   fetchSendHour().then(hour => populateSendHour(hour));
   loadDueToday();
   loadDailyStats();
-});
-
-el('savePw').addEventListener('click', async () => {
-  const pw = el('pwField').value;
-  if (!pw){ showStatus('pwStatus','error','Enter a password first.'); return; }
-  try{
-    await callBackend({ action:'savePassword', password: pw });
-    showStatus('pwStatus','success','Password saved. You won\u2019t need to retype it next time.');
-  }catch(e){
-    showStatus('pwStatus','error','Could not save (check the Setup URL above). ' + e.message);
-  }
 });
 
 el('saveBranding').addEventListener('click', async () => {
@@ -1748,7 +1777,12 @@ el('parseBtn').addEventListener('click', async () => {
     const buf = new Uint8Array(await selectedFile.arrayBuffer());
 
     showStatus('mainStatus','info','Decrypting…');
-    const pw = el('pwField').value;
+    const pw = localStorage.getItem('excelFilePassword') || '';
+    if (!pw) {
+      showStatus('mainStatus','error','Excel password not saved. Please save your password in the upload box first.');
+      el('parseBtn').disabled = false;
+      return;
+    }
     let decrypted;
     try{
       decrypted = await decryptXlsxBytes(buf, pw);
@@ -1887,7 +1921,6 @@ el('refreshDueToday').addEventListener('click', loadDueToday);
 
 loadDueToday();
 loadDailyStats();
-fetchSavedPassword().then(pw => { if (pw) el('pwField').value = pw; });
 fetchBrandConfig().then(config => populateBrandingFields(config));
 fetchSendHour().then(hour => populateSendHour(hour));
 
@@ -2178,7 +2211,12 @@ el('birthdayParseBtn').addEventListener('click', async () => {
     const buf = new Uint8Array(await selectedBirthdayFile.arrayBuffer());
 
     showStatus('birthdayMainStatus','info','Decrypting…');
-    const pw = el('pwField').value;
+    const pw = localStorage.getItem('excelFilePassword') || '';
+    if (!pw) {
+      showStatus('birthdayMainStatus','error','Excel password not saved. Please save your password in the upload box first.');
+      el('birthdayParseBtn').disabled = false;
+      return;
+    }
     let decrypted;
     try{
       decrypted = await decryptXlsxBytes(buf, pw);
@@ -2657,45 +2695,51 @@ let birthdayPageOffset = 0;
 const CLIENTS_PER_PAGE = 10;
 
 function filterDuesClients(){
-  const query = document.getElementById('duesSearchInput')?.value.toLowerCase() || '';
-  const container = document.getElementById('duesClientsList');
+  const query = (document.getElementById('duesSearchInput')?.value || '').toLowerCase().trim();
   
-  if (!query){
-    // Show all clients
+  if (!query) {
+    // Reset to full list
     renderDuesClientsList(allDuesClients);
     document.getElementById('duesSearchCount').textContent = '';
     return;
   }
 
-  // Filter clients by name
-  const filtered = allDuesClients.filter(client => 
-    client.clientName.toLowerCase().includes(query)
-  );
+  // Filter by name, product, or policy number
+  const filtered = allDuesClients.filter(client => {
+    const nameMatch = (client.clientName || '').toLowerCase().includes(query);
+    const productMatch = (client.product || '').toLowerCase().includes(query);
+    const policyMatch = (client.policyNumber || '').toLowerCase().includes(query);
+    return nameMatch || productMatch || policyMatch;
+  });
 
   renderDuesClientsList(filtered);
-  document.getElementById('duesSearchCount').textContent = 
-    `${filtered.length} of ${allDuesClients.length} client(s) found`;
+  const count = filtered.length;
+  const total = allDuesClients.length;
+  document.getElementById('duesSearchCount').textContent = count === total ? '' : `${count} of ${total} match`;
 }
 
 function filterBirthdayClients(){
-  const query = document.getElementById('birthdaySearchInput')?.value.toLowerCase() || '';
-  const container = document.getElementById('birthdayClientsList');
+  const query = (document.getElementById('birthdaySearchInput')?.value || '').toLowerCase().trim();
   
-  if (!query){
-    // Show all clients
+  if (!query) {
+    // Reset to full list
     renderBirthdayClientsList(allBirthdayClients);
     document.getElementById('birthdaySearchCount').textContent = '';
     return;
   }
 
-  // Filter clients by name
-  const filtered = allBirthdayClients.filter(client => 
-    client.fullName.toLowerCase().includes(query)
-  );
+  // Filter by name, email, or location
+  const filtered = allBirthdayClients.filter(client => {
+    const nameMatch = (client.fullName || '').toLowerCase().includes(query);
+    const emailMatch = (client.email || '').toLowerCase().includes(query);
+    const locationMatch = (client.location || '').toLowerCase().includes(query);
+    return nameMatch || emailMatch || locationMatch;
+  });
 
   renderBirthdayClientsList(filtered);
-  document.getElementById('birthdaySearchCount').textContent = 
-    `${filtered.length} of ${allBirthdayClients.length} client(s) found`;
+  const count = filtered.length;
+  const total = allBirthdayClients.length;
+  document.getElementById('birthdaySearchCount').textContent = count === total ? '' : `${count} of ${total} match`;
 }
 
 async function fetchDuesClientList(){
@@ -2895,21 +2939,15 @@ async function refreshDuesClientList(){
   renderDuesClientsList(clients);
   sub.textContent = clients.length + ' client(s) loaded';
   
-  // Reset search
+  // Reset search input
   const searchInput = document.getElementById('duesSearchInput');
   if (searchInput) {
     searchInput.value = '';
     document.getElementById('duesSearchCount').textContent = '';
+    // Attach listener directly
+    searchInput.removeEventListener('input', filterDuesClients);
+    searchInput.addEventListener('input', filterDuesClients);
   }
-  
-  // Attach search listener - do this AFTER render
-  setTimeout(() => {
-    const input = document.getElementById('duesSearchInput');
-    if (input) {
-      input.removeEventListener('input', filterDuesClients);
-      input.addEventListener('input', filterDuesClients);
-    }
-  }, 0);
 }
 
 async function refreshBirthdayClientList(){
@@ -2920,21 +2958,15 @@ async function refreshBirthdayClientList(){
   renderBirthdayClientsList(clients);
   sub.textContent = clients.length + ' client(s) loaded';
   
-  // Reset search
+  // Reset search input
   const searchInput = document.getElementById('birthdaySearchInput');
   if (searchInput) {
     searchInput.value = '';
     document.getElementById('birthdaySearchCount').textContent = '';
+    // Attach listener directly
+    searchInput.removeEventListener('input', filterBirthdayClients);
+    searchInput.addEventListener('input', filterBirthdayClients);
   }
-  
-  // Attach search listener - do this AFTER render
-  setTimeout(() => {
-    const input = document.getElementById('birthdaySearchInput');
-    if (input) {
-      input.removeEventListener('input', filterBirthdayClients);
-      input.addEventListener('input', filterBirthdayClients);
-    }
-  }, 0);
 }
 
 async function saveDuesPreferences(){
