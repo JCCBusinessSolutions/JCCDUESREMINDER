@@ -195,6 +195,8 @@
   }
   .collapse-toggle.collapsed{ transform:rotate(-90deg); }
   #dueTodayBody.collapsed{ display:none; }
+  #duesClientsBody.collapsed{ display:none; }
+  #birthdayClientsBody.collapsed{ display:none; }
 
   /* ============================================================
      NEW DASHBOARD CHROME — sidebar, hero, KPIs, mobile nav.
@@ -455,7 +457,7 @@
     <div class="font-heading text-gold text-xl font-bold tracking-wide leading-tight" id="sidebarTitleLine2">Due Reminder</div>
   </div>
   <nav class="flex-1 px-4 flex flex-col gap-1">
-    <div class="sidebar-link active" data-nav="dues"><span>📊</span>Client Dues</div>
+    <div class="sidebar-link active" data-nav="dues"><span>📊</span>Premium Due Reminders</div>
     <div class="sidebar-link" data-nav="birthday"><span>🎂</span>Client Birthday Greetings</div>
     <div class="sidebar-link" data-nav="upload"><span>📤</span>Upload &amp; Parse</div>
     <div class="sidebar-link" data-nav="reports"><span>📈</span>Reports</div>
@@ -630,6 +632,16 @@
         <h2>Upload Raw Life Policy List</h2>
         <p class="sub">From AHO, open Clients → All Clients → Download Report → Life Policy List. It will be decrypted, cleaned, and pushed straight into your Dues Tracker.</p>
 
+        <!-- Excel Password Input -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end;">
+          <div style="flex:1;min-width:200px;">
+            <label style="display:block;font-size:12px;font-weight:600;color:#0C447C;margin-bottom:6px;">Excel Password</label>
+            <input type="password" id="excelPasswordInput" placeholder="Enter your Excel file password" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
+          </div>
+          <button class="btn-gold" id="saveExcelPasswordBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;font-size:12px;">💾 SAVE</button>
+        </div>
+        <div style="font-size:11px;color:#27AE60;margin-bottom:12px;" id="passwordSavedStatus"></div>
+
         <div class="flex flex-col sm:flex-row gap-3 items-stretch">
           <div class="file-drop flex-1 flex flex-col items-center justify-center gap-1.5 !py-7" id="fileDrop">
             <div class="text-2xl mb-1">☁️</div>
@@ -790,6 +802,16 @@
           <h2>Upload Raw Client List</h2>
           <p class="sub">From AHO, open Clients → All Clients → Download Report → Client List. It will be decrypted, cleaned, and pushed into your Birthday Tracker.</p>
 
+          <!-- Excel Password Input -->
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end;">
+            <div style="flex:1;min-width:200px;">
+              <label style="display:block;font-size:12px;font-weight:600;color:#0C447C;margin-bottom:6px;">Excel Password</label>
+              <input type="password" id="excelPasswordInput" placeholder="Enter your Excel file password" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
+            </div>
+            <button class="btn-gold" id="saveExcelPasswordBtn" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;font-size:12px;">💾 SAVE</button>
+          </div>
+          <div style="font-size:11px;color:#27AE60;margin-bottom:12px;" id="passwordSavedStatus"></div>
+
           <div class="flex flex-col sm:flex-row gap-3 items-stretch">
             <div class="file-drop flex-1 flex flex-col items-center justify-center gap-1.5 !py-7" id="birthdayFileDrop">
               <div class="text-2xl mb-1">☁️</div>
@@ -880,7 +902,7 @@
       <!-- DUES CLIENTS -->
       <div class="card" id="duesClientsCard">
         <div class="card-header-row" id="duesClientsHeader">
-          <h2 style="margin:0;">Dues Reminders</h2>
+          <h2 style="margin:0;">Premium Due Reminders</h2>
           <button class="collapse-toggle" id="toggleDuesClients" aria-label="Collapse">&#8943;</button>
         </div>
         <div id="duesClientsBody">
@@ -892,7 +914,7 @@
             <div style="font-size:11px;color:#6b7280;margin-top:8px;" id="duesSearchCount"></div>
           </div>
           <p class="sub" id="duesClientsSub">Loading your clients…</p>
-          <div id="duesClientsList"></div>
+          <div id="duesClientsList" style="max-height:400px;overflow-y:auto;padding:12px 16px;border:1px solid #e7dfcf;border-radius:6px;"></div>
           <div class="row" style="margin-top:12px;">
             <button class="btn-primary" id="refreshDuesClients" style="display:flex;align-items:center;justify-content:center;gap:7px;">🔄 REFRESH LIST</button>
             <button class="btn-gold" id="saveDuesPreferences" style="display:flex;align-items:center;justify-content:center;gap:7px;margin-left:8px;">✓ SAVE CHANGES</button>
@@ -916,7 +938,7 @@
             <div style="font-size:11px;color:#6b7280;margin-top:8px;" id="birthdaySearchCount"></div>
           </div>
           <p class="sub" id="birthdayClientsSub">Loading your clients…</p>
-          <div id="birthdayClientsList"></div>
+          <div id="birthdayClientsList" style="max-height:400px;overflow-y:auto;padding:12px 16px;border:1px solid #e7dfcf;border-radius:6px;"></div>
           <div class="row" style="margin-top:12px;">
             <button class="btn-primary" id="refreshBirthdayClients" style="display:flex;align-items:center;justify-content:center;gap:7px;">🔄 REFRESH LIST</button>
             <button class="btn-gold" id="saveBirthdayPreferences" style="display:flex;align-items:center;justify-content:center;gap:7px;margin-left:8px;">✓ SAVE CHANGES</button>
@@ -1042,7 +1064,7 @@
      MOBILE BOTTOM NAV
      ============================================================ -->
 <nav class="mobile-bottom-nav lg:hidden" id="mobileBottomNav">
-  <div class="mobile-nav-item active" data-nav="dues" onclick="scrollToSection('dues')"><span class="ico">📊</span>Client Dues</div>
+  <div class="mobile-nav-item active" data-nav="dues" onclick="scrollToSection('dues')"><span class="ico">📊</span>Premium Due Reminders</div>
   <div class="mobile-nav-item" data-nav="birthday" onclick="scrollToSection('birthday')"><span class="ico">🎂</span>Birthdays</div>
   <div class="mobile-nav-item" data-nav="upload" onclick="scrollToSection('upload')"><span class="ico">📤</span>Upload</div>
   <div class="mobile-nav-item" data-nav="clients" onclick="scrollToSection('clients')"><span class="ico">👥</span>Clients</div>
@@ -1069,7 +1091,7 @@ function showPage(pageName){
     ? { line1: 'Client Birthday', line2: 'Greetings', full: 'Client Birthday Greetings' }
     : pageName === 'clients'
     ? { line1: 'Manage Your', line2: 'Clients', full: 'Manage Your Clients' }
-    : { line1: 'Client Payment', line2: 'Due Reminder', full: 'Client Payment Due Reminder' };
+    : { line1: 'Premium Due', line2: 'Reminders', full: 'Premium Due Reminders' };
   document.getElementById('sidebarTitleLine1').textContent = titles.line1;
   document.getElementById('sidebarTitleLine2').textContent = titles.line2;
   document.getElementById('mobileTitleLine1').textContent = titles.line1;
@@ -2630,6 +2652,9 @@ document.getElementById('gateEmail').addEventListener('keydown', (e) => {
 // Store full client lists for filtering
 let allDuesClients = [];
 let allBirthdayClients = [];
+let duesPageOffset = 0;
+let birthdayPageOffset = 0;
+const CLIENTS_PER_PAGE = 10;
 
 function filterDuesClients(){
   const query = document.getElementById('duesSearchInput')?.value.toLowerCase() || '';
@@ -2703,15 +2728,27 @@ async function fetchBirthdayClientList(){
   }
 }
 
-function renderDuesClientsList(clients){
+function renderDuesClientsList(clients, append = false){
   const container = document.getElementById('duesClientsList');
+  
   if (!clients || clients.length === 0){
-    container.innerHTML = '<p style="color:#9CA3AF;font-size:13px;">No clients found.</p>';
+    if (!append) container.innerHTML = '<p style="color:#9CA3AF;font-size:13px;">No clients found.</p>';
     return;
   }
 
+  // Reset offset if not appending (new search/refresh)
+  if (!append) {
+    duesPageOffset = 0;
+    container.innerHTML = '';
+  }
+
+  // Get page slice
+  const start = duesPageOffset;
+  const end = start + CLIENTS_PER_PAGE;
+  const pageClients = clients.slice(start, end);
+
   let html = '<div style="display:flex;flex-direction:column;gap:6px;">';
-  clients.forEach(client => {
+  pageClients.forEach(client => {
     const checked = client.sendDues ? 'checked' : '';
     const dataKey = 'dues-' + client.policyNumber.replace(/[^a-zA-Z0-9-_]/g, '-');
     html += `
@@ -2726,7 +2763,15 @@ function renderDuesClientsList(clients){
     `;
   });
   html += '</div>';
-  container.innerHTML = html;
+  
+  if (append) {
+    container.innerHTML += html;
+  } else {
+    container.innerHTML = html;
+  }
+
+  // Update offset
+  duesPageOffset = end;
 
   // Add toggle listeners
   document.querySelectorAll('.dues-preference-toggle').forEach(checkbox => {
@@ -2734,17 +2779,56 @@ function renderDuesClientsList(clients){
       // Just mark as changed, save on button click
     });
   });
+  
+  // Setup infinite scroll if more clients exist
+  if (end < clients.length) {
+    setupDuesInfiniteScroll(clients);
+  }
 }
 
-function renderBirthdayClientsList(clients){
+function setupDuesInfiniteScroll(clients){
+  const container = document.getElementById('duesClientsList');
+  
+  // Remove old listener to avoid duplicates
+  container.removeEventListener('scroll', handleDuesScroll);
+  
+  function handleDuesScroll(){
+    const scrollHeight = container.scrollHeight;
+    const scrollTop = container.scrollTop;
+    const clientHeight = container.clientHeight;
+    
+    // If scrolled near bottom, load more
+    if (scrollTop + clientHeight >= scrollHeight - 100) {
+      if (duesPageOffset < clients.length) {
+        renderDuesClientsList(clients, true); // Append more
+      }
+    }
+  }
+  
+  container.addEventListener('scroll', handleDuesScroll);
+}
+
+function renderBirthdayClientsList(clients, append = false){
   const container = document.getElementById('birthdayClientsList');
+  
   if (!clients || clients.length === 0){
-    container.innerHTML = '<p style="color:#9CA3AF;font-size:13px;">No clients found.</p>';
+    if (!append) container.innerHTML = '<p style="color:#9CA3AF;font-size:13px;">No clients found.</p>';
     return;
   }
 
+  // Reset offset if not appending (new search/refresh)
+  if (!append) {
+    birthdayPageOffset = 0;
+    container.innerHTML = '';
+  }
+
+  // Get page slice
+  const start = birthdayPageOffset;
+  const end = start + CLIENTS_PER_PAGE;
+  const pageClients = clients.slice(start, end);
+
   let html = '<div style="display:flex;flex-direction:column;gap:6px;">';
-  clients.forEach(client => {
+  pageClients.forEach(client => {
     const checked = client.sendBirthday ? 'checked' : '';
     const dataKey = 'bday-' + client.email.replace(/[^a-zA-Z0-9-_]/g, '-');
     html += `
@@ -2758,13 +2842,49 @@ function renderBirthdayClientsList(clients){
     `;
   });
   html += '</div>';
-  container.innerHTML = html;
+  
+  if (append) {
+    container.innerHTML += html;
+  } else {
+    container.innerHTML = html;
+  }
 
+  // Update offset
+  birthdayPageOffset = end;
+
+  // Add toggle listeners
   document.querySelectorAll('.birthday-preference-toggle').forEach(checkbox => {
     checkbox.addEventListener('change', function(){
       // Just mark as changed, save on button click
     });
   });
+  
+  // Setup infinite scroll if more clients exist
+  if (end < clients.length) {
+    setupBirthdayInfiniteScroll(clients);
+  }
+}
+
+function setupBirthdayInfiniteScroll(clients){
+  const container = document.getElementById('birthdayClientsList');
+  
+  // Remove old listener to avoid duplicates
+  container.removeEventListener('scroll', handleBirthdayScroll);
+  
+  function handleBirthdayScroll(){
+    const scrollHeight = container.scrollHeight;
+    const scrollTop = container.scrollTop;
+    const clientHeight = container.clientHeight;
+    
+    // If scrolled near bottom, load more
+    if (scrollTop + clientHeight >= scrollHeight - 100) {
+      if (birthdayPageOffset < clients.length) {
+        renderBirthdayClientsList(clients, true); // Append more
+      }
+    }
+  }
+  
+  container.addEventListener('scroll', handleBirthdayScroll);
 }
 
 async function refreshDuesClientList(){
@@ -2774,12 +2894,22 @@ async function refreshDuesClientList(){
   allDuesClients = clients; // Store for filtering
   renderDuesClientsList(clients);
   sub.textContent = clients.length + ' client(s) loaded';
+  
   // Reset search
   const searchInput = document.getElementById('duesSearchInput');
   if (searchInput) {
     searchInput.value = '';
     document.getElementById('duesSearchCount').textContent = '';
   }
+  
+  // Attach search listener - do this AFTER render
+  setTimeout(() => {
+    const input = document.getElementById('duesSearchInput');
+    if (input) {
+      input.removeEventListener('input', filterDuesClients);
+      input.addEventListener('input', filterDuesClients);
+    }
+  }, 0);
 }
 
 async function refreshBirthdayClientList(){
@@ -2789,12 +2919,22 @@ async function refreshBirthdayClientList(){
   allBirthdayClients = clients; // Store for filtering
   renderBirthdayClientsList(clients);
   sub.textContent = clients.length + ' client(s) loaded';
+  
   // Reset search
   const searchInput = document.getElementById('birthdaySearchInput');
   if (searchInput) {
     searchInput.value = '';
     document.getElementById('birthdaySearchCount').textContent = '';
   }
+  
+  // Attach search listener - do this AFTER render
+  setTimeout(() => {
+    const input = document.getElementById('birthdaySearchInput');
+    if (input) {
+      input.removeEventListener('input', filterBirthdayClients);
+      input.addEventListener('input', filterBirthdayClients);
+    }
+  }, 0);
 }
 
 async function saveDuesPreferences(){
@@ -2884,16 +3024,49 @@ async function saveBirthdayPreferences(){
 }
 
 // Add clients section functionality
+function setupPasswordHandling(){
+  const EXCEL_PASSWORD_KEY = 'excelFilePassword';
+  const passwordInput = document.getElementById('excelPasswordInput');
+  const saveBtn = document.getElementById('saveExcelPasswordBtn');
+  const statusDiv = document.getElementById('passwordSavedStatus');
+  
+  // Load saved password on page load
+  const savedPassword = localStorage.getItem(EXCEL_PASSWORD_KEY);
+  if (savedPassword && passwordInput) {
+    passwordInput.value = savedPassword;
+    if (statusDiv) statusDiv.textContent = '✓ Password saved and ready to use';
+  }
+  
+  // Save password when button is clicked
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      const password = passwordInput.value.trim();
+      if (!password) {
+        if (statusDiv) statusDiv.textContent = '❌ Please enter a password first';
+        if (statusDiv) statusDiv.style.color = '#EB5757';
+        return;
+      }
+      localStorage.setItem(EXCEL_PASSWORD_KEY, password);
+      if (statusDiv) {
+        statusDiv.textContent = '✓ Password saved! Ready to upload files.';
+        statusDiv.style.color = '#27AE60';
+      }
+      setTimeout(() => {
+        if (statusDiv) statusDiv.textContent = '';
+      }, 3000);
+    });
+  }
+  
+  // Store password reference for use in parser
+  window.getExcelPassword = () => localStorage.getItem(EXCEL_PASSWORD_KEY) || '';
+}
+
 function setupClientsTab(){
   // Wire up buttons
   document.getElementById('refreshDuesClients')?.addEventListener('click', refreshDuesClientList);
   document.getElementById('refreshBirthdayClients')?.addEventListener('click', refreshBirthdayClientList);
   document.getElementById('saveDuesPreferences')?.addEventListener('click', saveDuesPreferences);
   document.getElementById('saveBirthdayPreferences')?.addEventListener('click', saveBirthdayPreferences);
-
-  // Search input listeners
-  document.getElementById('duesSearchInput')?.addEventListener('input', filterDuesClients);
-  document.getElementById('birthdaySearchInput')?.addEventListener('input', filterBirthdayClients);
 
   // Collapse toggles
   document.getElementById('toggleDuesClients')?.addEventListener('click', function(){
@@ -2922,6 +3095,7 @@ function setupClientsTab(){
 // Initialize on page load
 (async function() {
   await fetchAccessList();
+  setupPasswordHandling();
   setupClientsTab();
   if (!checkAuth()) {
     document.getElementById('gateScreen').style.display = 'flex';
