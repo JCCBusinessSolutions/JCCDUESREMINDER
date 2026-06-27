@@ -328,10 +328,12 @@
     background:#1B2A42; border-color:#27374D; color:#E8EDF5;
   }
   /* Dark mode for password input labels and notes */
-  body.dark-mode label[style*="color:#0C447C"]{ color:#B8D4FF !important; }
+  body.dark-mode label[style*="color:#0C447C"]{ color:#5B8BC4 !important; }
   body.dark-mode div[style*="color:#9CA3AF"]{ color:#8DA0BC !important; }
   body.dark-mode div[style*="color:#27AE60"]{ color:#4ECB71 !important; }
   body.dark-mode #saveExcelPasswordBtn{ color:#FFFFFF !important; }
+  /* Dark mode for triple dots */
+  body.dark-mode .collapse-toggle{ color:#FFFFFF !important; }
   /* Dark mode for search inputs and filters */
   body.dark-mode #duesSearchInput, body.dark-mode #birthdaySearchInput{ 
     background:#1B2A42 !important; border-color:#27374D !important; color:#E8EDF5 !important;
@@ -362,16 +364,21 @@
   /* Dark mode for client list item text */
   body.dark-mode #duesClientsList div[style*="color:#0C447C"],
   body.dark-mode #birthdayClientsList div[style*="color:#0C447C"]{
-    color:#B8D4FF !important;
+    color:#5B8BC4 !important;
   }
   body.dark-mode #duesClientsList div[style*="color:#6B7280"],
   body.dark-mode #birthdayClientsList div[style*="color:#6B7280"]{
     color:#8DA0BC !important;
   }
-  /* Dark mode for premium amounts */
-  body.dark-mode #duesClientsList div[style*="color:#C99A3B"],
-  body.dark-mode #birthdayClientsList div[style*="color:#C99A3B"]{
-    color:#FFD966 !important;
+  /* Dark mode for client list item text - keep client names navy blue */
+  body.dark-mode #duesClientsList div[style*="flex:1"] div[style*="color:#0C447C"],
+  body.dark-mode #birthdayClientsList div[style*="flex:1"] div[style*="color:#0C447C"]{
+    color:#5B8BC4 !important;
+  }
+  /* Dark mode for premium amounts - keep gold */
+  body.dark-mode #duesClientsList label > div:last-child,
+  body.dark-mode #birthdayClientsList label > div:last-child{
+    color:#C99A3B !important;
   }
   /* Dark mode for "No clients found" message */
   body.dark-mode #duesClientsList p[style*="color:#9CA3AF"],
@@ -2802,7 +2809,7 @@ function renderDuesClientsList(clients, append = false){
           <div style="font-weight:600;color:#0C447C;font-size:13px;">${escapeHtml(client.clientName)}</div>
           <div style="font-size:11px;color:#6B7280;">${escapeHtml(client.product)} • Due: ${client.dueDate || 'N/A'}</div>
         </div>
-        <div style="font-size:13px;font-weight:600;color:#C99A3B;">PHP ${Number(client.premiumAmount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}</div>
+        <div style="font-size:13px;font-weight:600;color:#0C447C;">PHP ${Number(client.premiumAmount || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})}</div>
       </label>
     `;
   });
@@ -3129,6 +3136,9 @@ function setupClientsTab(){
   await fetchAccessList();
   setupPasswordHandling();
   setupClientsTab();
+  // Load client lists and attach search listeners on page load
+  await refreshDuesClientList();
+  await refreshBirthdayClientList();
   if (!checkAuth()) {
     document.getElementById('gateScreen').style.display = 'flex';
   }
