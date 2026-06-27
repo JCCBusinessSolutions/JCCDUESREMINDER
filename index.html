@@ -1059,13 +1059,16 @@
 let currentPage = 'dues';
 
 function showPage(pageName){
-  if (pageName !== 'dues' && pageName !== 'birthday') return;
+  if (pageName !== 'dues' && pageName !== 'birthday' && pageName !== 'clients') return;
   currentPage = pageName;
   document.getElementById('page-dues').style.display = (pageName === 'dues') ? '' : 'none';
   document.getElementById('page-birthday').style.display = (pageName === 'birthday') ? '' : 'none';
+  document.getElementById('page-clients').style.display = (pageName === 'clients') ? '' : 'none';
 
   const titles = pageName === 'birthday'
     ? { line1: 'Client Birthday', line2: 'Greetings', full: 'Client Birthday Greetings' }
+    : pageName === 'clients'
+    ? { line1: 'Manage Your', line2: 'Clients', full: 'Manage Your Clients' }
     : { line1: 'Client Payment', line2: 'Due Reminder', full: 'Client Payment Due Reminder' };
   document.getElementById('sidebarTitleLine1').textContent = titles.line1;
   document.getElementById('sidebarTitleLine2').textContent = titles.line2;
@@ -1076,7 +1079,7 @@ function showPage(pageName){
 
 function scrollToSection(name){
   // Full page switches
-  if (name === 'dues' || name === 'birthday'){
+  if (name === 'dues' || name === 'birthday' || name === 'clients'){
     showPage(name);
     window.scrollTo({ top:0, behavior:'smooth' });
     document.querySelectorAll('.sidebar-link, .mobile-nav-item').forEach(el => el.classList.remove('active'));
@@ -1103,8 +1106,8 @@ function scrollToSection(name){
 document.querySelectorAll('.sidebar-link[data-nav]').forEach(link => {
   link.addEventListener('click', () => {
     const nav = link.dataset.nav;
-    if (nav === 'reports' || nav === 'clients'){
-      showToast((nav === 'reports' ? 'Reports' : 'Clients') + ' are coming soon.');
+    if (nav === 'reports'){
+      showToast('Reports are coming soon.');
       return;
     }
     if (nav === 'settings'){
