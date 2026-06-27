@@ -2675,7 +2675,11 @@ function filterBirthdayClients(){
 
 async function fetchDuesClientList(){
   try{
-    const res = await fetch(DEFAULT_SCRIPT_URL + '?action=getDuesClientList');
+    const scriptUrl = localStorage.getItem(SCRIPT_URL_STORAGE_KEY);
+    if (!scriptUrl) {
+      throw new Error('Apps Script URL not configured. Go to Settings and paste your Web App URL.');
+    }
+    const res = await fetch(scriptUrl + '?action=getDuesClientList');
     const data = await res.json();
     return data.clients || [];
   }catch(e){
@@ -2686,7 +2690,11 @@ async function fetchDuesClientList(){
 
 async function fetchBirthdayClientList(){
   try{
-    const res = await fetch(DEFAULT_SCRIPT_URL + '?action=getBirthdayClientList');
+    const scriptUrl = localStorage.getItem(SCRIPT_URL_STORAGE_KEY);
+    if (!scriptUrl) {
+      throw new Error('Apps Script URL not configured. Go to Settings and paste your Web App URL.');
+    }
+    const res = await fetch(scriptUrl + '?action=getBirthdayClientList');
     const data = await res.json();
     return data.clients || [];
   }catch(e){
@@ -2794,6 +2802,13 @@ async function saveDuesPreferences(){
   status.textContent = '💾 Saving…';
   status.style.display = 'block';
 
+  const scriptUrl = localStorage.getItem(SCRIPT_URL_STORAGE_KEY);
+  if (!scriptUrl) {
+    status.textContent = '❌ Error: Apps Script URL not configured';
+    status.style.color = '#EB5757';
+    return;
+  }
+
   let count = 0;
   let failed = 0;
   const checkboxes = document.querySelectorAll('.dues-preference-toggle');
@@ -2803,7 +2818,7 @@ async function saveDuesPreferences(){
     const enabled = checkbox.checked;
 
     try{
-      const res = await fetch(DEFAULT_SCRIPT_URL, {
+      const res = await fetch(scriptUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -2830,6 +2845,13 @@ async function saveBirthdayPreferences(){
   status.textContent = '💾 Saving…';
   status.style.display = 'block';
 
+  const scriptUrl = localStorage.getItem(SCRIPT_URL_STORAGE_KEY);
+  if (!scriptUrl) {
+    status.textContent = '❌ Error: Apps Script URL not configured';
+    status.style.color = '#EB5757';
+    return;
+  }
+
   let count = 0;
   let failed = 0;
   const checkboxes = document.querySelectorAll('.birthday-preference-toggle');
@@ -2839,7 +2861,7 @@ async function saveBirthdayPreferences(){
     const enabled = checkbox.checked;
 
     try{
-      const res = await fetch(DEFAULT_SCRIPT_URL, {
+      const res = await fetch(scriptUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
