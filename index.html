@@ -968,7 +968,7 @@
         <div id="duesClientsBody">
           <div style="padding:12px 16px;border-bottom:1px solid #e7dfcf;">
             <div style="position:relative;">
-              <input type="text" id="duesSearchInput" placeholder="🔍 Search by name..." style="width:100%;padding:10px 36px 10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
+              <input type="text" id="duesSearchInput" placeholder="🔍 Search by name..." onkeyup="filterDuesClients()" style="width:100%;padding:10px 36px 10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
               <button onclick="document.getElementById('duesSearchInput').value=''; filterDuesClients();" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#999;font-size:16px;padding:4px;">✕</button>
             </div>
             <div style="font-size:11px;color:#6b7280;margin-top:8px;" id="duesSearchCount"></div>
@@ -992,7 +992,7 @@
         <div id="birthdayClientsBody">
           <div style="padding:12px 16px;border-bottom:1px solid #e7dfcf;">
             <div style="position:relative;">
-              <input type="text" id="birthdaySearchInput" placeholder="🔍 Search by name..." style="width:100%;padding:10px 36px 10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
+              <input type="text" id="birthdaySearchInput" placeholder="🔍 Search by name..." onkeyup="filterBirthdayClients()" style="width:100%;padding:10px 36px 10px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;font-family:inherit;">
               <button onclick="document.getElementById('birthdaySearchInput').value=''; filterBirthdayClients();" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#999;font-size:16px;padding:4px;">✕</button>
             </div>
             <div style="font-size:11px;color:#6b7280;margin-top:8px;" id="birthdaySearchCount"></div>
@@ -3135,7 +3135,7 @@ function setupClientsTab(){
   document.querySelectorAll('[data-nav="clients"]').forEach(el => {
     el.addEventListener('click', function(e){
       e.preventDefault();
-      setActiveTab('clients');
+      showPage('clients');
       refreshDuesClientList();
       refreshBirthdayClientList();
     });
