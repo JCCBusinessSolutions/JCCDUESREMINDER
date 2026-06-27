@@ -1876,6 +1876,48 @@ function formatDateDisplay(dateStr){
   return `${MONTH_ABBR[monthIndex]}-${d.padStart(2, '0')}-${y}`;
 }
 
+// Sorts dues clients by due date, soonest/most-overdue first. The Apps
+// Script always sends 'yyyy-MM-dd' (zero-padded), so a plain string
+// comparison already sorts chronologically — no Date parsing needed.
+// Entries with no due date are pushed to the very end.
+function sortDuesByDueDate(list){
+  return list.slice().sort((a, b) => {
+    const da = a.dueDate || '9999-99-99';
+    const db = b.dueDate || '9999-99-99';
+    return da < db ? -1 : da > db ? 1 : 0;
+  });
+}
+
+// Returns how many days from today until this person's NEXT birthday
+// occurs (0 = today, 1 = tomorrow, ... wrapping into next year once their
+// birth month/day has already passed this year). Used to sort the
+// Birthday Greetings list so the soonest upcoming birthday is always first,
+// running through the rest of this month, then the following months.
+function daysUntilNextBirthday(dateOfBirthStr){
+  if (!dateOfBirthStr) return Infinity; // no DOB — sort to the bottom
+  const parts = String(dateOfBirthStr).trim().split('-');
+  if (parts.length !== 3) return Infinity;
+  const birthMonth = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+  const birthDay = parseInt(parts[2], 10);
+  if (isNaN(birthMonth) || isNaN(birthDay)) return Infinity;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let next = new Date(today.getFullYear(), birthMonth, birthDay);
+  next.setHours(0, 0, 0, 0);
+  if (next < today){
+    next = new Date(today.getFullYear() + 1, birthMonth, birthDay);
+    next.setHours(0, 0, 0, 0);
+  }
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+  return Math.round((next - today) / MS_PER_DAY);
+}
+
+function sortBirthdaysByUpcoming(list){
+  return list.slice().sort((a, b) => daysUntilNextBirthday(a.dateOfBirth) - daysUntilNextBirthday(b.dateOfBirth));
+}
+
 async function loadDueToday(){
   const sub = el('dueTodaySub');
   const list = el('dueTodayList');
@@ -3086,13 +3128,15 @@ async function refreshDuesClientList(){
   const sub = document.getElementById('duesClientsSub');
   sub.textContent = '🔄 Refreshing…';
   const clients = await fetchDuesClientList();
-  allDuesClients = clients; // Store for filtering
+  // Sort soonest/most-overdue due date first before storing, so every
+  // render (full list, searched, or scrolled) follows this order.
+  allDuesClients = sortDuesByDueDate(clients);
   // Fresh pull from the sheet — clear any unsaved local toggles so we don't
   // show stale state that no longer matches what's on the server.
   Object.keys(duesPendingChanges).forEach(k => delete duesPendingChanges[k]);
-  renderDuesClientsList(clients);
+  renderDuesClientsList(allDuesClients);
   updateDuesExcludedSummary();
-  sub.textContent = clients.length + ' client(s) loaded';
+  sub.textContent = allDuesClients.length + ' client(s) loaded, sorted by closest due date';
 
   const searchInput = document.getElementById('duesSearchInput');
   if (searchInput) {
@@ -3106,11 +3150,13 @@ async function refreshBirthdayClientList(){
   const sub = document.getElementById('birthdayClientsSub');
   sub.textContent = '🔄 Refreshing…';
   const clients = await fetchBirthdayClientList();
-  allBirthdayClients = clients; // Store for filtering
+  // Sort by soonest upcoming birthday first (this month, day by day, then
+  // rolling into next month, then wrapping into next year as needed).
+  allBirthdayClients = sortBirthdaysByUpcoming(clients);
   Object.keys(birthdayPendingChanges).forEach(k => delete birthdayPendingChanges[k]);
-  renderBirthdayClientsList(clients);
+  renderBirthdayClientsList(allBirthdayClients);
   updateBirthdayExcludedSummary();
-  sub.textContent = clients.length + ' client(s) loaded';
+  sub.textContent = allBirthdayClients.length + ' client(s) loaded, sorted by soonest birthday';
 
   const searchInput = document.getElementById('birthdaySearchInput');
   if (searchInput) {
