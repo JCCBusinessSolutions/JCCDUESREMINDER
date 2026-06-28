@@ -652,10 +652,18 @@
       </div>
     </div>
 
-    <div class="card" id="duesTestEmailCard">
-      <h2>Test Reminder Email</h2>
-      <p class="sub">Sends a real dues reminder email — using your saved branding, header/footer photos, and links — to your own configured contact email so you can check it lands correctly.</p>
-      <div class="row">
+    <div class="card" id="duesPreviewCard">
+      <h2>Preview Reminder Email</h2>
+      <p class="sub">See exactly what clients receive, using your real header/footer photos and links.</p>
+      <div class="row" style="margin-top:6px;">
+        <button class="btn-gold" id="previewEmailBtn">PREVIEW EMAIL</button>
+      </div>
+      <div id="emailPreviewContainer" style="display:none; margin-top:16px;">
+        <div class="preview-meta" id="previewMeta"></div>
+        <div id="previewEmailBody"></div>
+      </div>
+
+      <div class="row" style="margin-top:14px;">
         <button class="btn-primary" id="sendDuesTestBtn">CLIENT DUE REMINDER EMAIL TEST</button>
       </div>
     </div>
@@ -1106,14 +1114,6 @@
           <button class="btn-ghost" id="saveBranding">SAVE BRANDING</button>
         </div>
         <div class="status" id="brandingStatus"></div>
-
-        <div class="row" style="margin-top:6px;">
-          <button class="btn-gold" id="previewEmailBtn">PREVIEW EMAIL</button>
-        </div>
-        <div id="emailPreviewContainer" style="display:none; margin-top:16px;">
-          <div class="preview-meta" id="previewMeta"></div>
-          <div id="previewEmailBody"></div>
-        </div>
       </div>
 
       <div class="card" id="sendHourCard" style="display:none;">
