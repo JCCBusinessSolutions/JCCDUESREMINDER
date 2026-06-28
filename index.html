@@ -195,6 +195,7 @@
   }
   .collapse-toggle.collapsed{ transform:rotate(-90deg); }
   #dueTodayBody.collapsed{ display:none; }
+  #birthdaysTodayBody.collapsed{ display:none; }
   #duesClientsBody.collapsed{ display:none; }
   #birthdayClientsBody.collapsed{ display:none; }
 
@@ -1957,7 +1958,7 @@ async function loadDueToday(){
     sub.textContent = rows.length + ' polic' + (rows.length===1?'y':'ies') + ' due today:';
     list.innerHTML = rows.map(r => {
       const amt = 'PHP ' + Number(r.premiumAmount||0).toLocaleString('en-PH', {minimumFractionDigits:2});
-      const sentBadge = r.lastReminderSent ? '<div class="sent-badge">REMINDER SENT</div>' : '';
+      const sentBadge = r.lastReminderSent ? '<div class="sent-badge">EMAIL REMINDER SENT</div>' : '';
       return '<div class="due-item">'
         + '<div class="due-field"><span class="label">NAME</span><span class="value">' + escapeHtml(r.clientName) + '</span></div>'
         + '<div class="due-field"><span class="label">POLICY NUMBER</span><span class="value">' + escapeHtml(r.policyNumber) + '</span></div>'
