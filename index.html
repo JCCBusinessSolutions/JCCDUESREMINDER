@@ -652,6 +652,14 @@
       </div>
     </div>
 
+    <div class="card" id="duesTestEmailCard">
+      <h2>Test Reminder Email</h2>
+      <p class="sub">Sends a real dues reminder email — using your saved branding, header/footer photos, and links — to your own configured contact email so you can check it lands correctly.</p>
+      <div class="row">
+        <button class="btn-primary" id="sendDuesTestBtn">CLIENT DUE REMINDER EMAIL TEST</button>
+      </div>
+    </div>
+
     <!-- ============================================================
          SECTION 2 — TODAY'S ACTIVITY (real KPI data)
          ============================================================ -->
@@ -828,6 +836,14 @@
         <div id="birthdayEmailPreviewContainer" style="display:none; margin-top:16px;">
           <div class="preview-meta" id="birthdayPreviewMeta"></div>
           <div id="birthdayPreviewEmailBody"></div>
+        </div>
+      </div>
+
+      <div class="card" id="birthdayTestEmailCard">
+        <h2>Test Birthday Email</h2>
+        <p class="sub">Sends a real birthday email — using your saved branding, header/footer photos, and links — to your own configured contact email so you can check it lands correctly.</p>
+        <div class="row">
+          <button class="btn-primary" id="sendBirthdayTestBtn">CLIENT BIRTHDAY EMAIL TEST</button>
         </div>
       </div>
 
@@ -2562,6 +2578,52 @@ el('previewBirthdayEmailBtn').addEventListener('click', async () => {
   }finally{
     el('previewBirthdayEmailBtn').disabled = false;
     el('previewBirthdayEmailBtn').textContent = 'PREVIEW BIRTHDAY EMAIL';
+  }
+});
+
+/* ============================================================
+   REAL TEST-SEND BUTTONS — Dues + Birthday
+   Unlike the browser-only preview above, these actually call
+   GmailApp.sendEmail() on the backend and land a real message
+   in the advisor's own inbox (config.contactEmail), so they can
+   confirm header/footer photos, links, and rendering before
+   relying on the daily auto-send.
+   ============================================================ */
+el('sendDuesTestBtn').addEventListener('click', async () => {
+  const btn = el('sendDuesTestBtn');
+  btn.disabled = true;
+  btn.textContent = 'SENDING\u2026';
+  try{
+    const result = await callBackend({ action: 'sendDuesTestEmail' });
+    if (result && result.success){
+      showToast('Test reminder email sent to ' + (result.sentTo || 'your inbox') + '!');
+    } else {
+      showToast(result && result.error ? result.error : 'Could not send test email.');
+    }
+  }catch(err){
+    showToast('Could not send test email. Check your connection and try again.');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'CLIENT DUE REMINDER EMAIL TEST';
+  }
+});
+
+el('sendBirthdayTestBtn').addEventListener('click', async () => {
+  const btn = el('sendBirthdayTestBtn');
+  btn.disabled = true;
+  btn.textContent = 'SENDING\u2026';
+  try{
+    const result = await callBackend({ action: 'sendBirthdayTestEmail' });
+    if (result && result.success){
+      showToast('Test birthday email sent to ' + (result.sentTo || 'your inbox') + '!');
+    } else {
+      showToast(result && result.error ? result.error : 'Could not send test email.');
+    }
+  }catch(err){
+    showToast('Could not send test email. Check your connection and try again.');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'CLIENT BIRTHDAY EMAIL TEST';
   }
 });
 
