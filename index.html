@@ -1438,12 +1438,22 @@ function parseEncryptionInfoStandard(bytes){
 }
 
 async function decryptXlsxBytes(fileBytes, password){
-  const cfb = XLSX.CFB.read(fileBytes, {type:'array'});
+  let cfb;
+  try{
+    cfb = XLSX.CFB.read(fileBytes, {type:'array'});
+  }catch(e){
+    // Not a CFB container at all (modern unencrypted .xlsx is a plain ZIP) —
+    // i.e. definitely not password-protected. Return as-is, no password needed.
+    return fileBytes;
+  }
   const encInfoEntry = XLSX.CFB.find(cfb, '/EncryptionInfo');
   const encPkgEntry = XLSX.CFB.find(cfb, '/EncryptedPackage');
   if (!encInfoEntry || !encPkgEntry){
-    // Not encrypted — return as-is
+    // Not encrypted — return as-is, no password needed
     return fileBytes;
+  }
+  if (!password){
+    throw new Error('PASSWORD_REQUIRED');
   }
   const encInfoBytes = new Uint8Array(encInfoEntry.content);
   const encPkgBytes = new Uint8Array(encPkgEntry.content);
@@ -1826,17 +1836,13 @@ el('parseBtn').addEventListener('click', async () => {
     showStatus('mainStatus','info','Reading file…');
     const buf = new Uint8Array(await selectedFile.arrayBuffer());
 
-    showStatus('mainStatus','info','Decrypting…');
+    showStatus('mainStatus','info','Checking file…');
     const pw = localStorage.getItem('excelFilePassword') || '';
-    if (!pw) {
-      showStatus('mainStatus','error','Excel password not saved. Please save your password in the upload box first.');
-      el('parseBtn').disabled = false;
-      return;
-    }
     let decrypted;
     try{
       decrypted = await decryptXlsxBytes(buf, pw);
     }catch(e){
+      if (e.message === 'PASSWORD_REQUIRED') throw e;
       throw new Error('WRONG_PASSWORD_OR_FORMAT');
     }
 
@@ -1861,6 +1867,7 @@ el('parseBtn').addEventListener('click', async () => {
 
   }catch(e){
     let msg = e.message;
+    if (msg === 'PASSWORD_REQUIRED') msg = 'This file is password-protected. Please save its password in the upload box first.';
     if (msg === 'WRONG_PASSWORD_OR_FORMAT') msg = 'Could not open the file — check the password and try again.';
     if (msg === 'NO_SCRIPT_URL') msg = 'No Apps Script URL configured. Tap "Setup" above.';
     if (msg === 'HEADER_NOT_FOUND') msg = 'This doesn\u2019t look like a Sun Life policy list export.';
@@ -2316,17 +2323,13 @@ el('birthdayParseBtn').addEventListener('click', async () => {
     showStatus('birthdayMainStatus','info','Reading file…');
     const buf = new Uint8Array(await selectedBirthdayFile.arrayBuffer());
 
-    showStatus('birthdayMainStatus','info','Decrypting…');
+    showStatus('birthdayMainStatus','info','Checking file…');
     const pw = localStorage.getItem('excelFilePassword') || '';
-    if (!pw) {
-      showStatus('birthdayMainStatus','error','Excel password not saved. Please save your password in the upload box first.');
-      el('birthdayParseBtn').disabled = false;
-      return;
-    }
     let decrypted;
     try{
       decrypted = await decryptXlsxBytes(buf, pw);
     }catch(e){
+      if (e.message === 'PASSWORD_REQUIRED') throw e;
       throw new Error('WRONG_PASSWORD_OR_FORMAT');
     }
 
@@ -2351,6 +2354,7 @@ el('birthdayParseBtn').addEventListener('click', async () => {
 
   }catch(e){
     let msg = e.message;
+    if (msg === 'PASSWORD_REQUIRED') msg = 'This file is password-protected. Please save its password in the upload box first.';
     if (msg === 'WRONG_PASSWORD_OR_FORMAT') msg = 'Could not open the file — check the password and try again.';
     if (msg === 'NO_SCRIPT_URL') msg = 'No Apps Script URL configured. Tap "Setup" above.';
     if (msg === 'HEADER_NOT_FOUND') msg = 'This doesn\u2019t look like a Sun Life client list export.';
