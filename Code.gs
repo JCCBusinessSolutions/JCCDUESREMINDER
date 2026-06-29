@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * GGE / JCC DUES TRACKER — Apps Script Backend (ENHANCED)
+ * GGE / JCC DUES TRACKER - Apps Script Backend (ENHANCED)
  * With per-advisor client preference toggles
  * ============================================================
  */
@@ -214,7 +214,7 @@ function createBirthdayDailyTrigger(hour){
 }
 
 /* ============================================================
-   CLIENT PREFERENCE MANAGEMENT
+   NEW: CLIENT PREFERENCE MANAGEMENT
    ============================================================ */
 
 // Fetch all clients from Dues Tracker with their current Send Dues? preference
@@ -222,11 +222,11 @@ function getDuesClientList(){
   setupSheet();
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
   if (!sheet) return [];
-
+  
   const data = sheet.getDataRange().getValues();
   const headers = data[0];
   const col = name => headers.indexOf(name);
-
+  
   const result = [];
   for (let i = 1; i < data.length; i++){
     const row = data[i];
@@ -239,9 +239,9 @@ function getDuesClientList(){
     const dueDate = row[col('Due Date')];
     const policyStatus = row[col('Policy Status')];
     const sendDues = row[col('Send Dues?')];
-
+    
     if (!policyNum) continue; // skip empty rows
-
+    
     // Parse premium amount - handle currency symbols, spaces, commas
     let parsedAmount = 0;
     if (premiumAmount) {
@@ -253,7 +253,7 @@ function getDuesClientList(){
         parsedAmount = parseFloat(cleaned) || 0;
       }
     }
-
+    
     result.push({
       policyNumber: policyNum,
       clientName: clientName,
@@ -274,11 +274,11 @@ function getBirthdayClientList(){
   setupBirthdaySheet();
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(BIRTHDAY_SHEET_NAME);
   if (!sheet) return [];
-
+  
   const data = sheet.getDataRange().getValues();
   const headers = data[0];
   const col = name => headers.indexOf(name);
-
+  
   const result = [];
   for (let i = 1; i < data.length; i++){
     const row = data[i];
@@ -288,9 +288,9 @@ function getBirthdayClientList(){
     const location = row[col('Location')];
     const dob = row[col('Date of Birth')];
     const sendBday = row[col('Send Birthday?')];
-
+    
     if (!fullName || !email) continue; // skip empty rows
-
+    
     result.push({
       fullName: fullName,
       email: email,
@@ -311,7 +311,7 @@ function setDuesPreference(policyNumber, enabled){
   const headers = data[0];
   const policyCol = headers.indexOf('Policy Number');
   const sendCol = headers.indexOf('Send Dues?');
-
+  
   for (let i = 1; i < data.length; i++){
     if (String(data[i][policyCol]) === String(policyNumber)){
       sheet.getRange(i + 1, sendCol + 1).setValue(enabled);
@@ -329,7 +329,7 @@ function setBirthdayPreference(email, enabled){
   const headers = data[0];
   const emailCol = headers.indexOf('Email');
   const sendCol = headers.indexOf('Send Birthday?');
-
+  
   for (let i = 1; i < data.length; i++){
     if (String(data[i][emailCol]).toLowerCase() === String(email).toLowerCase()){
       sheet.getRange(i + 1, sendCol + 1).setValue(enabled);
@@ -667,10 +667,10 @@ function sendDailyReminders(){
   for (let i = 1; i < data.length; i++){
     const row = data[i];
     const sendDues = row[col('Send Dues?')];
-
+    
     // SKIP if Send Dues? is FALSE
     if (sendDues === false || sendDues === 'FALSE' || sendDues === 0 || sendDues === '0') continue;
-
+    
     const dueDate = row[col('Due Date')];
     if (!(dueDate instanceof Date)) continue;
 
@@ -709,7 +709,7 @@ function sendReminderEmail(row, col){
 
   const tz = Session.getScriptTimeZone();
   const subjectDate = Utilities.formatDate(dueDate, tz, 'MMMM d');
-  const subject = 'SUN LIFE PREMIUM DUE REMINDER - ' + subjectDate.toUpperCase();
+  const subject = 'PREMIUM DUE REMINDER - ' + subjectDate.toUpperCase();
   const htmlBody = buildReminderEmailHtml(clientName, policyNumber, product, amount, dueDate, config);
 
   GmailApp.sendEmail(email, subject, '', {
@@ -793,14 +793,14 @@ function previewReminderEmail(){
   const htmlBody = buildReminderEmailHtml(
     'Dela Cruz, Juan Miguel',
     '0123456789',
-    'Sun Smarter Life Elite Peso 10',
+    'Sample Insurance Plan',
     50000,
     sampleDueDate,
     config
   );
   const tz = Session.getScriptTimeZone();
   const subjectDate = Utilities.formatDate(sampleDueDate, tz, 'MMMM d');
-  GmailApp.sendEmail(myEmail, 'PREVIEW – SUN LIFE PREMIUM DUE REMINDER - ' + subjectDate.toUpperCase(), '', {
+  GmailApp.sendEmail(myEmail, 'PREVIEW, PREMIUM DUE REMINDER - ' + subjectDate.toUpperCase(), '', {
     htmlBody: htmlBody,
     name: config.senderName,
     inlineImages: getEmailImages(config)
@@ -818,14 +818,14 @@ function sendDuesTestEmailToSelf(){
   const htmlBody = buildReminderEmailHtml(
     'Dela Cruz, Juan Miguel',
     '0123456789',
-    'Sun Smarter Life Elite Peso 10',
+    'Sample Insurance Plan',
     50000,
     sampleDueDate,
     config
   );
-  const tz = Session.getScriptTimeZone();
-  const subjectDate = Utilities.formatDate(sampleDueDate, tz, 'MMMM d');
-  GmailApp.sendEmail(config.contactEmail, 'TEST – SUN LIFE PREMIUM DUE REMINDER - ' + subjectDate.toUpperCase(), '', {
+  const tz2 = Session.getScriptTimeZone();
+  const subjectDate2 = Utilities.formatDate(sampleDueDate, tz2, 'MMMM d');
+  GmailApp.sendEmail(config.contactEmail, 'TEST, PREMIUM DUE REMINDER - ' + subjectDate2.toUpperCase(), '', {
     htmlBody: htmlBody,
     name: config.senderName,
     inlineImages: getEmailImages(config)
@@ -920,10 +920,10 @@ function sendDailyBirthdayGreetings(){
   for (let i = 1; i < data.length; i++){
     const row = data[i];
     const sendBday = row[col('Send Birthday?')];
-
+    
     // SKIP if Send Birthday? is FALSE
     if (sendBday === false || sendBday === 'FALSE' || sendBday === 0 || sendBday === '0') continue;
-
+    
     const dob = row[col('Date of Birth')];
     if (!(dob instanceof Date)) continue;
     if (dob.getMonth() !== todayMonth || dob.getDate() !== todayDay) continue;
@@ -977,18 +977,6 @@ function firstNameOnly(rawName){
   return name.split(/\s+/)[0] || '';
 }
 
-/* ------------------------------------------------------------
-   FIX (this update): emoji was previously embedded as a raw
-   character literal in this file. Raw 4-byte emoji characters
-   can get corrupted (rendered as ?/replacement boxes in Gmail)
-   if the source file passes through any non-fully-UTF-8-safe
-   step (clipboard, editor, save pipeline). Using the HTML
-   numeric entity &#127881; instead keeps the source 100% ASCII
-   — the recipient's email client renders the entity as 🎉 at
-   display time, so it can never get mangled in transit again.
-   Apply the same approach (entity, not raw paste) for any
-   future emoji added to these templates.
-   ------------------------------------------------------------ */
 function buildBirthdayEmailHtml(fullName, config){
   const greetingName = firstNameOnly(fullName);
   const connectBlock = config.connectLink
@@ -1016,7 +1004,7 @@ function previewBirthdayEmail(){
   const config = getBrandConfig();
   assertConfiguredForBirthday(config);
   const htmlBody = buildBirthdayEmailHtml('Juan Miguel Dela Cruz', config);
-  GmailApp.sendEmail(myEmail, 'PREVIEW – HAPPY BIRTHDAY GREETING', '', {
+  GmailApp.sendEmail(myEmail, 'PREVIEW \u2013 HAPPY BIRTHDAY GREETING', '', {
     htmlBody: htmlBody,
     name: config.senderName,
     inlineImages: getEmailImages(config)
@@ -1029,7 +1017,7 @@ function sendBirthdayTestEmailToSelf(){
   const config = getBrandConfig();
   assertConfiguredForBirthday(config);
   const htmlBody = buildBirthdayEmailHtml('Juan Miguel Dela Cruz', config);
-  GmailApp.sendEmail(config.contactEmail, 'TEST – HAPPY BIRTHDAY GREETING', '', {
+  GmailApp.sendEmail(config.contactEmail, 'TEST \u2013 HAPPY BIRTHDAY GREETING', '', {
     htmlBody: htmlBody,
     name: config.senderName,
     inlineImages: getEmailImages(config)
